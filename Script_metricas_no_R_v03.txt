@@ -1,0 +1,104 @@
+setwd("C:\\temp\\Aula_Metrica_EcoPai_R_set2019")
+#####
+#install.packages("spatialEco", dependencies=T)
+#install.packages("rgdal", dependencies=T)
+
+library(raster)
+library(rgdal)
+library(spatialEco)
+
+lnd<-raster("RClasses_Final1.tif") # importing landuse raster
+
+lnd.freq<-table(matrix(lnd))
+lnd.freq
+
+lnd.freq.pct<- lnd.freq/sum(lnd.freq)*100
+round(lnd.freq.pct,2)
+
+#Value	Classes	COR
+#1	Água
+#2	Vegetação árborea nativa
+#3	Vegetação herbácea nativa
+#4	Eucalipto
+#5	Árvores em lotes
+#6	Vegetação rasteira em lotes
+#7	Ruas arborizadas
+#8	Ruas e avenidas
+#9	Residência
+#10	Prédios
+#11	Comércio
+#12	Indústria
+#13	Cemitério
+#14	Aeroporto
+#15	Lote Vazio
+#16	Agricultura
+#17	Mineração
+
+color.list<-c("aquamarine", "darkgreen","darkolivegreen1","darkorange1","darkolivegreen","darkolivegreen3","chartreuse3",
+	"black","antiquewhite3","bisque4","cornsilk","darkmagenta","darkslateblue","deeppink",
+	"azure","deeppink4","blueviolet")
+plot(lnd, col=color.list)
+
+################################# INICIO lnd2cl = 2 classes, mata e não mata
+lnd2cl<-lnd
+lnd2cl[lnd== 1]<-0
+lnd2cl[lnd== 2]<-1
+lnd2cl[lnd== 3]<-0
+lnd2cl[lnd== 4]<-0
+lnd2cl[lnd== 5]<-1
+lnd2cl[lnd== 6]<-0
+lnd2cl[lnd== 7]<-1
+lnd2cl[lnd== 8]<-0
+lnd2cl[lnd== 9]<-0
+lnd2cl[lnd==10]<-0
+lnd2cl[lnd==11]<-0
+lnd2cl[lnd==12]<-0
+lnd2cl[lnd==13]<-0
+lnd2cl[lnd==14]<-0
+lnd2cl[lnd==15]<-0
+lnd2cl[lnd==16]<-0
+lnd2cl[lnd==17]<-0
+
+x11()
+plot(lnd2cl, col=c("grey90","green4"))
+
+ptos_aleat<-readOGR(dsn = ".", layer = "area_urbana_pontos_aleatorios") # loading sampling points shape
+
+points(ptos_aleat, pch=19, cex=1.2, col="red")
+
+#PARAMETERS
+scl  <-c(100) # effect scales
+mrtc  <-c("prop.landscape","edge.density") # metrics code from function "land.metrics" in "SpatialEco" package #aqui pode colocar todas as metricas desejadas...olhar no help da funcao
+bkgrd  <-NA # background code
+
+
+#USING THE FUNCTION (function must be loaded before)
+source("multi_lnd_mtrc_function_v_1_0.txt")
+
+metricas_2classes_ALEAT<-multi.lnd.mtrc(ptos_aleat,lnd2cl,scl,mrtc,bkgrd)
+
+head(metricas_2classes_ALEAT)
+
+ptos_tabela_dados<-ptos_aleat@data
+head(ptos_tabela_dados)
+
+ptos_tabela_dados$point_ID<-1:nrow(ptos_tabela_dados)
+metricas_2classes_ALEAT$point_ID<-1:nrow(metricas_2classes_ALEAT)
+
+ptos_tabela_dados_metricas<-merge(ptos_tabela_dados, 
+	metricas_2classes_ALEAT, by=intersect(names(ptos_tabela_dados), 
+	names(metricas_2classes_ALEAT)), all.x=T)
+
+ptos_tabela_dados_metricas
+
+pontos_gravar_metricas<-ptos_aleat
+pontos_gravar_metricas@data<-ptos_tabela_dados_metricas
+
+writeOGR(pontos_gravar_metricas, dsn = ".", layer = "hahaha_2Classes_metricas", driver="ESRI Shapefile")
+
+writeRaster(lnd2cl, filename="RClasses_Final1_lnd2cl.tif", format="GTiff")
+################################# FIM lnd2cl = 2 classes, mata e não mata
+
+
+
+
