@@ -1,9 +1,13 @@
 library(tidyverse)
 detach("package:MASS")
 
+getDataPath <- function (...) {
+  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra",  ...))
+}
+
 rm(list = ls())
 
-#Minute selection
+#Windy minutes selection - get the CSV (for each index I repeated the process), read it, select the line corresponding to the selected minute and add the corresponding file name in the column called File
 file1 <- ("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/ResultsIndices_Channel1/JZ001_WB28/BOW-JZ1-WB28_20191014_180000.wav/Towsey.Acoustic/BOW-JZ1-WB28_20191014_180000__Towsey.Acoustic.R3D.csv")
 file1 <- read.csv(file1) %>% 
   filter(Index == "2") %>% 
@@ -64,63 +68,20 @@ file12 <- read.csv(file12) %>%
   filter(Index == "32") %>% 
   mutate(., File = basename(file12))
 
-
+#Rbind all the selected minutes in a csv file (this is done by index)
 
 selected_minutes <- rbind(file1, file2, file3, file4, file5, file6, file7, file8, file9, file10, file11, file12) %>% 
   select(., Index, File, everything()) %>% 
   write.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/WindRemoval_SpectralIndices_Channel1/R3D_SelectedMinutes.csv")
 
-#Readin dataset with non-normalised medians
 
-indices_all <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/WindRemoval_SpectralIndices_Channel1/Median_SelectedMinutes_AllIndices.csv", row.names = 1)
-
-library(vegan)
-
-#normalising medians
-
-indices_norm <- decostand(indices_all, method = "standardize")
-
-write.csv(indices_norm, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/WindRemoval_SpectralIndices_Channel1/Median_SelectedMinutes_AllIndices_Norm.csv")
-
-#reading the full dataset with all minutes
-
-directory <- ("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/ResultsIndices_Channel1/")
-
-files <- list.files(directory, pattern = ".R3D.csv", full.names = T, recursive = T)
-
-for (file in files) {
-  read.csv(file) %>% 
-    mutate(FID = paste(basename(file),Index, sep = "_")) %>%
-    write.csv(file)
-}
-
-list <- as.list(files)
-df <- lapply(list, read.csv)
-df <- do.call(rbind, df)
-df <- select(df, 1:2, 259, everything())
-write.csv(df, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/SpectralIndices_Channel1/SpectralR3D_Channel1.csv")
-
-rm(list = ls())
-
-dir <- setwd("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/SpectralIndices_Channel1/")
-
-files <- list.files(dir, full.names = T)
-list <- as.list(files)
-df <- lapply(list, read.csv)
-df <- do.call(rbind, df)
-write.csv(df, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/SpectralIndices_Channel1/AllSpectral_Channel1.csv")
-
-#normalising the full dataset
-
-library(tidyverse)
-
-rm(list = ls())
 #Reading the full dataset with all spectral indices
 df <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/SpectralIndices_Channel1/AllSpectral_Channel1.csv")
 
 #Separating the column FID into transect + point; date; time and index - which we will remove because there is already a column with this name. We are keeping the column FID because in there we can find all the info we need about the row
 df1 <- separate(df, col = FID, into = c("TransectPoint", "Date", "Time", "Index2"), remove = F, sep = "_")
 rm(df)
+
 df2 <- select(df1, -c(X.2, X.1, X, Index2))
 rm(df1)
 
@@ -137,13 +98,6 @@ t2 <- mutate(t1, FID = paste0(t1$Group.1, sep = "_", t1$Group.2, sep = "_", t1$G
 t3 <- select(t2, -c(Group.1, Group.2, Group.3, Group.4, Index))
 
 t4 <- select(t3, FID, everything())
-#directory <- ("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/WindRemoval_SpectralIndices_Channel1")
-
-#files <- list.files(directory, pattern = "_SelectedMinutes.csv", full.names = T, recursive = F)
-
-#list <- as.list(files)
-#df <- lapply(list, read.csv)
-#df <- do.call(rbind, df)
 
 rm(t1, t2, t3)
 
@@ -152,22 +106,25 @@ t5 <- data.frame(t4, row.names = 1)
 t6 <- rowMeans(t5)
 
 
-getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra",  ...))
-}
-
 #write.csv(t5, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/WindRemoval_SpectralIndices_Channel1/SpectralIndices_FCSAveragedPerMinute.csv")
+
 write.csv(t5, getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SpectralIndices_FCSAveragedPerMinute.csv"))
 
+#Creating the matrix with the euclidean distances of the points - huge one
 m <- dist(t5, method = "euclidean")
 
+#Transforming it into a mtrix
 v <- data.matrix(m)
 
 rm(t4)
 
+#Using the reshape package to reshape the df
+
 library(reshape2)
 
 melted <- melt(v)
+
+#selecting the windy minutes that were chosen to be the 0 point 
 
 melted1 <- filter(melted, Var1 == "BOW-JZ1-WB28_20191014_180000_2_2" | Var1 == "BOW-JZ2-WB11_20191014_205938_20_20" | Var1 =="BOW-JZ3-WB25_20191015_065852_18_18" | Var1 == "BOW-401-WB22_20191015_085838_33_33" | Var1 == "BOW-402-WB15_20191015_105827_14_14" | Var1 == "BOW-403-WB49_20191015_125827_51_51" | Var1 == "BOW-404-WB56_20191015_145807_56_56" | Var1 == "BOW-406-WB46_20191015_160002_51_51" | Var1 == "BOW-410-WB43_20191015_165807_45_45" | Var1 == "BOW-411-WB35_20191015_175952_0_0" | Var1 == "BOW-412-WB34_20191016_065852_14_14" | Var1 == "BOW-413-WB06_20191015_075847_32_32")
 
@@ -177,14 +134,9 @@ melted1 <- read.csv(getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1
 
 df <- read.csv(getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SpectralIndices_FCSAveragedPerMinute.csv"))
 
-library(ggplot2)
-
 head(melted1)
 
-
-group_by(melted1, Var2) %>% 
-  summarise(n = n()) %>%
-  filter(n == "12")
+#Selecting the values of distance that were equal or less than .4
 
 melted2 <- filter(melted1, value <= "0.4") %>% 
   write.csv(., getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SpectralIndices_WindMinAbove0.4.csv"))
@@ -204,15 +156,40 @@ name <- basename(files)
 name <- gsub(pattern = "__Towsey.Acoustic.Indices.csv", replacement = "", x = name)
 
 files <- as.list(files)
-df <- lapply(files, read.csv) 
-df<-do.call(rbind, df)
+df <- lapply(files, read.csv) %>% 
+  lapply(files, mutate(FID =paste(FileName, ResultMinute, sep = "_")))
+
 df <- select(df, BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName, ResultMinute)
 
 norm_df <- df %>% mutate_at(vars(1:15), scale)
 
-melted2 <- read.csv(getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SpectralIndices_WindMinAbove0.4.csv"))
+library(stringr)
+
+melted2 <- read.csv(getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SpectralIndices_WindMinAbove0.4.csv")) %>% 
+  mutate(FID = str_sub(Var2, start = 1, end = 31))
+
+windy_minutes <- as.list(unique(melted2$FID))
+
+#Getting the summary Indices and eliminating the windy minutes, pasting it all together to build the distance matrix#
+  
+files <- list.files(directory, pattern = ".Indices.csv", full.names = T, recursive = T)
+
+name <- basename(files)
+name <- gsub(pattern = "__Towsey.Acoustic.Indices.csv", replacement = "", x = name)
+
+
+files <- as.list(files)
+df <- lapply(files, read.csv) %>% 
+  map(~ mutate(., FID = paste(.$FileName, .$ResultMinute, sep = "_"))) %>% 
+  map(~ mutate(., wind = match(FID, windy_minutes, nomatch = 0, incomparables = "NA"))) %>%
+  map(~ filter(., wind == 0)) %>% 
+  map(~ select(., BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName, ResultMinute, wind, FID)) %>% 
+  map(~ mutate_at(., vars(1:15), scale)) %>%
+  map(~ separate(., col = FileName, into = c("Location", "Recorder", "PointData"), remove = F)) %>% 
+  do.call(rbind, .) %>% 
+  write.csv(., getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"))
 
 
 
 
-
+ 

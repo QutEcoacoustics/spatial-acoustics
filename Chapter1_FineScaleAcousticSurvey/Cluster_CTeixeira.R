@@ -7,10 +7,14 @@
 ############################################
 
 library(tidyverse)
+getDataPath <- function (...) {
+  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra",  ...))
+}
+
 
 ##Reading the data - using the normalised table output from normilisingindices.R - after normalising and excluding highly correlated ones
 
-load(file="C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/SummaryIndices_Channel1_Prepared/normalised_indices.RData")
+df <- read.csv(getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"), row.names = 23)
 
 #Loading necessary package
 
@@ -18,55 +22,47 @@ library(vegan)
 
 # Para construer um cluster tem que ser por etapas. A 1a etapa é construir uma matriz de distância:
 
-var.amb.pad<-decostand(indices_norm, method="standardize") # crio agora um objeto das variaveis padronizadas. A função decostand faz várias padronizações diferentes, a standardize é o que estamos falando, ou seja, todo mundo ter media 0 e desvio padrão 1). Podemos chamar o help dessa função para ver o que ela tem.
-
-?decostand
-
-# Vamos chamar o objeto para ver como ele é?
-
-var.amb.pad
-
-# Agora todas as variaveis são comparaveis. Quem era o maior valor de temperature continua sendo, e vice-versa, só que agora todo mundo está no mesmo padrão de variação. Isso é diferente da transformação, pois as diferenças continuam as mesmas.Olaha prova aí:
-
-plot(indices_norm) 
-
-plot(var.amb.pad)
+dist.matrix <- dist(df, method = "euclidean")
 
 
-#var.amb                                   var.amb.plot
+cluster_summary_channel1 <- hclust(dist.matrix, method = "ward.D2")
+heatmap(dist.matrix)
 
-# A diferença é só os valores nos eixos, mas a distribuiçao é a mesma!!! Só altera as mediadas, mas não altera em nada os significados dos valores.
+cut_avg <- cutree(cluster_summary_channel1, k = 6) #splitting the results into 6 clusters - arbitrary i looked the dendogram and simply decided this was a good number#
 
-# Olhem só a lógica da padronização. Eu tenho que ter todas as variáveis com o mesmo peso, mas se eu olha para a media da cobertura e da e da temperature elas são bem diferentes, mas o desvio padrão da cobertura é muitoooo maior. Assim se eu usar o valor bruto eu não estou tendo a realidade, assim padronizando, eu mudo o valor mas não a distância. No final eu tenho para todos média =0 e desvio padrão =1. As proporções se mantem. Diferente da transformação de log. Que altera os valores e achata eles.
+cluster_summary_channel1_df <- mutate(df, cluster = cut_avg) #assigning the cluster number to the df - now you'll be able to inspect#
+count(cluster_summary_channel1_df,cluster) #number of observations per cluster#
 
+write.csv(cluster_summary_channel1_df, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/FirstClusterAnalysis_6clusters.csv")
 
+#correlation matrix between normalised indices
+cor <- abs(cor(df[2:16], use = "complete.obs", method = "spearman"))
+pairs(df[2:16])
 
+library(ggplot2)
+p <- ggplot(cluster_summary_channel1_df, aes(x = PointData, y = AcousticComplexity, color = factor(cluster))) +
+  geom_jitter()
+ggsave(p, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/FirstClusterAnalysis_6clusters.jpg")
 
-#Passo 2: a matriz
+library(ape)
+plot(as.phylo(cluster_summary_channel1), type = "fan", tip.colors = )
 
-dist.amb<-dist(indices_norm, method="euclid") # agora vamos criar a matriz de distancia. A função é a dist ( objeto, method = ö método que eu quero”).
+# crio um objeto uso a função hclust (objeto da minha matriz, method = “average” uso average porque o método que eu quero para montar o cluster é o UPGMA, a distância é a media).
 
-dist.amb # para chamar a matriz no console, mas ela é enorme!!!!
-save(dist.amb, file="C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/DataAnalysis_BowraOct2019/ClusterAnalysis/Results/DistanceMatrix_alldata.Rdata")
-
-#Passo 3: o cluster
-
-cluster.amb<-hclust(dist.amb, method="ward.D2") # crio um objeto uso a função hclust (objeto da minha matriz, method = “average” uso average porque o método que eu quero para montar o cluster é o UPGMA, a distância é a media).
-
-plot(cluster.amb, hang=-1) # para ver o cluster! hang = -1 serve para esticar os raminhos, sem ele fica esquisito demais, vamos fazer?!. 
+plot(cluster_summary_channel1, hang=-1) # para ver o cluster! hang = -1 serve para esticar os raminhos, sem ele fica esquisito demais, vamos fazer?!. 
 
 # os numerous que aparecem no cladograma são os numerous das linhas (linha 1, linha 2, linha n).
 
 # analisando o cluster eu posso ver que eu tenho, de cara, dois grandes agrupamentos. Mostrar os nós. Se você quiser você pode pedir para o R traçar linha e discutir. É um ponto de corte. Melhor é interpretar o que estamos enxergando. No eixo y o valor vai de 0 a 3.0, nesse caso, mas pode ir de 0 a infinito, depende da dist6ancia que você tem. Não é uma escala interpretável. 
 
 library(MASS)
-s1 <- sammon(dist.amb)
+s1 <- sammon(cluster_summary_channel1)
 
 # Melhorando o aspecto do seu cluster
 
 #Cluster na horizontal: porque ele dá mais espaço para escrever nomes!
 
-plot(as.dendrogram(cluster.amb), horiz=T) # eu transformer para um novo format e aceita o cluster na horizontal, que é bom para botar nomes. Fica mais legível!!). A interpretação não muda só o aspecto dele.
+plot(as.dendrogram(cluster_summary_channel1), horiz=T) # eu transformer para um novo format e aceita o cluster na horizontal, que é bom para botar nomes. Fica mais legível!!). A interpretação não muda só o aspecto dele.
 #Colocando os nomes das unidades amostrais: porque o r coloca os numerous das linhas, e eu preciso dos nomes das unidades amostrais.
 
 #Desfazer e refazer a leitura dos dados: vou primeiro desler os dados e depois vou refazer a leitura 
