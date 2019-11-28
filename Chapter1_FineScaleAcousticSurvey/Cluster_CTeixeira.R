@@ -8,13 +8,13 @@
 
 library(tidyverse)
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra",  ...))
+  return(file.path("C:/Users/Nina Scarpelli/OneDrive - Queensland University of Technology/Documents/PhD/Project/",  ...))
 }
 
 
 ##Reading the data - using the normalised table output from normilisingindices.R - after normalising and excluding highly correlated ones
 
-df <- read.csv(getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"), row.names = 23)
+df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"), row.names = 23)
 
 #Loading necessary package
 
@@ -22,7 +22,7 @@ library(vegan)
 
 # Para construer um cluster tem que ser por etapas. A 1a etapa é construir uma matriz de distância:
 
-dist.matrix <- dist(df, method = "euclidean")
+dist.matrix <- dist(df[2:16], method = "euclidean")
 
 
 cluster_summary_channel1 <- hclust(dist.matrix, method = "ward.D2")
@@ -33,7 +33,7 @@ cut_avg <- cutree(cluster_summary_channel1, k = 6) #splitting the results into 6
 cluster_summary_channel1_df <- mutate(df, cluster = cut_avg) #assigning the cluster number to the df - now you'll be able to inspect#
 count(cluster_summary_channel1_df,cluster) #number of observations per cluster#
 
-write.csv(cluster_summary_channel1_df, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/FirstClusterAnalysis_6clusters.csv")
+write.csv(cluster_summary_channel1_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "FirstClusterAnalysis_6clusters.csv"))
 
 #correlation matrix between normalised indices
 cor <- abs(cor(df[2:16], use = "complete.obs", method = "spearman"))
@@ -42,7 +42,7 @@ pairs(df[2:16])
 library(ggplot2)
 p <- ggplot(cluster_summary_channel1_df, aes(x = PointData, y = AcousticComplexity, color = factor(cluster))) +
   geom_jitter()
-ggsave(p, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/FirstClusterAnalysis_6clusters.jpg")
+ggsave(p, "C:/Users/Nina Scarpelli/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/FirstClusterAnalysis_6clusters.jpg")
 
 library(ape)
 plot(as.phylo(cluster_summary_channel1), type = "fan", tip.colors = )
