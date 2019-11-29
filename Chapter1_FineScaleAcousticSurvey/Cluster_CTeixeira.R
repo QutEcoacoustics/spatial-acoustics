@@ -5,14 +5,14 @@
 ##12.11.2019
 
 ############################################
-
+rm(list = ls())
 library(tidyverse)
 getDataPath <- function (...) {
-  return(file.path("C:/Users/Nina Scarpelli/OneDrive - Queensland University of Technology/Documents/PhD/Project/",  ...))
+  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
 
-##Reading the data - using the normalised table output from normilisingindices.R - after normalising and excluding highly correlated ones
+##SM4 Fieldwork - Reading the data - using the normalised table output from normilisingindices.R - after normalising and excluding highly correlated ones
 
 df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"), row.names = 23)
 
@@ -22,21 +22,28 @@ library(vegan)
 
 # Para construer um cluster tem que ser por etapas. A 1a etapa é construir uma matriz de distância:
 
-dist.matrix <- dist(df[2:16], method = "euclidean")
+dist.matrix <- dist(df[c(2, 4:12, 14:15)], method = "euclidean")
 
 
 cluster_summary_channel1 <- hclust(dist.matrix, method = "ward.D2")
-heatmap(dist.matrix)
 
-cut_avg <- cutree(cluster_summary_channel1, k = 6) #splitting the results into 6 clusters - arbitrary i looked the dendogram and simply decided this was a good number#
+plot(cluster_summary_channel1, hang=-1)
+
+cut_avg <- cutree(cluster_summary_channel1, k = 20) #splitting the results into 20 clusters - arbitrary i looked the dendogram and simply decided this was a good number#
 
 cluster_summary_channel1_df <- mutate(df, cluster = cut_avg) #assigning the cluster number to the df - now you'll be able to inspect#
-count(cluster_summary_channel1_df,cluster) #number of observations per cluster#
+ count(cluster_summary_channel1_df,cluster) #number of observations per cluster#
 
-write.csv(cluster_summary_channel1_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "FirstClusterAnalysis_6clusters.csv"))
+inspection_minutes4 <- filter(cluster_summary_channel1_df, cluster == "4") %>% 
+  sample_n(., size = 10, replace = F) %>% 
+  write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20ClusterInspection4_SummaryIndices.csv"))
+
+
+write.csv(cluster_summary_channel1_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "ThirsClusterAnalysis_20clusters.csv"))
 
 #correlation matrix between normalised indices
-cor <- abs(cor(df[2:16], use = "complete.obs", method = "spearman"))
+cor <- abs(cor(df[2:16], use = "complete.obs", method = "spearman")) %>% 
+  write.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "correlationmatrix_afterwindremoval.csv"))
 pairs(df[2:16])
 
 library(ggplot2)
