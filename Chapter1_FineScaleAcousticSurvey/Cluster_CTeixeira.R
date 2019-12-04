@@ -14,7 +14,7 @@ getDataPath <- function (...) {
 
 ##SM4 Fieldwork - Reading the data - using the normalised table output from normilisingindices.R - after normalising and excluding highly correlated ones
 
-df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"), row.names = 23)
+df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"), row.names = 23)
 
 #Loading necessary package
 
@@ -24,19 +24,31 @@ library(vegan)
 
 dist.matrix <- dist(df[c(2, 4:12, 14:15)], method = "euclidean")
 
-
+#Calculation of the cluster - hierarchical clusters usind ward.d2 method (Phillips et al, 2018)
 cluster_summary_channel1 <- hclust(dist.matrix, method = "ward.D2")
 
 plot(cluster_summary_channel1, hang=-1)
 
-cut_avg <- cutree(cluster_summary_channel1, k = 20) #splitting the results into 20 clusters - arbitrary i looked the dendogram and simply decided this was a good number#
+dist.matrix  
 
-cluster_summary_channel1_df <- mutate(df, cluster = cut_avg) #assigning the cluster number to the df - now you'll be able to inspect#
- count(cluster_summary_channel1_df,cluster) #number of observations per cluster#
+cut_avg <- cutree(cluster_summary_channel1, h = 50.5) #splitting the results into 20 clusters - arbitrary i looked the dendogram and simply decided this was a good number#
 
-inspection_minutes4 <- filter(cluster_summary_channel1_df, cluster == "4") %>% 
+cluster_summary_channel2_df <- mutate(df, cluster = cut_avg, cluster_order = cluster_summary_channel1) #assigning the cluster number to the df - now you'll be able to inspect# 
+
+#write.csv(cluster_summary_channel2_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
+ 
+
+cluster_summary_channel2_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv")) %>% 
+  separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE) %>%
+  select(., -c(X.1, X.2, X.3)) %>%
+  #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
+
+
+count <- count(cluster_summary_channel2_df,cluster_order) #number of observations per cluster#
+
+inspection_minutes <- filter(cluster_summary_channel2_df, cluster == "12") %>% 
   sample_n(., size = 10, replace = F) %>% 
-  write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20ClusterInspection4_SummaryIndices.csv"))
+  #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20ClusterInspection6_SummaryIndices.csv"))
 
 
 write.csv(cluster_summary_channel1_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "ThirsClusterAnalysis_20clusters.csv"))
@@ -47,7 +59,7 @@ cor <- abs(cor(df[2:16], use = "complete.obs", method = "spearman")) %>%
 pairs(df[2:16])
 
 library(ggplot2)
-p <- ggplot(cluster_summary_channel1_df, aes(x = PointData, y = AcousticComplexity, color = factor(cluster))) +
+p <- ggplot(cluster_summary_channel2_df, aes(x = cluster, y = BackgroundNoise, color = time)) +
   geom_jitter()
 ggsave(p, "C:/Users/Nina Scarpelli/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/FirstClusterAnalysis_6clusters.jpg")
 
