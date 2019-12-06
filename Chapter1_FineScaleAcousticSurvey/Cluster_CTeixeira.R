@@ -14,99 +14,74 @@ getDataPath <- function (...) {
 
 ##SM4 Fieldwork - Reading the data - using the normalised table output from normilisingindices.R - after normalising and excluding highly correlated ones
 
-df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"), row.names = 23)
+df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"), row.names = 23) %>% 
+  separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE)
+
+df <- df[c(2, 4:12, 14:15)]
 
 #Loading necessary package
 
 library(vegan)
-
-# Para construer um cluster tem que ser por etapas. A 1a etapa é construir uma matriz de distância:
-
-dist.matrix <- dist(df[c(2, 4:12, 14:15)], method = "euclidean")
-
-#Calculation of the cluster - hierarchical clusters usind ward.d2 method (Phillips et al, 2018)
-cluster_summary_channel1 <- hclust(dist.matrix, method = "ward.D2")
-
-plot(cluster_summary_channel1, hang=-1)
-
-dist.matrix  
-
-cut_avg <- cutree(cluster_summary_channel1, h = 50.5) #splitting the results into 20 clusters - arbitrary i looked the dendogram and simply decided this was a good number#
-
-cluster_summary_channel2_df <- mutate(df, cluster = cut_avg, cluster_order = cluster_summary_channel1) #assigning the cluster number to the df - now you'll be able to inspect# 
-
-#write.csv(cluster_summary_channel2_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
- 
-
-cluster_summary_channel2_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv")) %>% 
-  separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE) %>%
-  select(., -c(X.1, X.2, X.3)) %>%
-  #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
-
-
-count <- count(cluster_summary_channel2_df,cluster_order) #number of observations per cluster#
-
-inspection_minutes <- filter(cluster_summary_channel2_df, cluster == "12") %>% 
-  sample_n(., size = 10, replace = F) %>% 
-  #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20ClusterInspection6_SummaryIndices.csv"))
-
-
-write.csv(cluster_summary_channel1_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "ThirsClusterAnalysis_20clusters.csv"))
 
 #correlation matrix between normalised indices
 cor <- abs(cor(df[2:16], use = "complete.obs", method = "spearman")) %>% 
   write.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "correlationmatrix_afterwindremoval.csv"))
 pairs(df[2:16])
 
-library(ggplot2)
-p <- ggplot(cluster_summary_channel2_df, aes(x = cluster, y = BackgroundNoise, color = time)) +
-  geom_jitter()
-ggsave(p, "C:/Users/Nina Scarpelli/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/FirstClusterAnalysis_6clusters.jpg")
+# Para construer um cluster tem que ser por etapas. A 1a etapa é construir uma matriz de distância:
 
-library(ape)
-plot(as.phylo(cluster_summary_channel1), type = "fan", tip.colors = )
+dist.matrix <- dist(df[c(2, 4:12, 14:15)], method = "euclidean")
 
-# crio um objeto uso a função hclust (objeto da minha matriz, method = “average” uso average porque o método que eu quero para montar o cluster é o UPGMA, a distância é a media).
+#Calculation of the cluster - hierarchical clusters usind ward.d2 method (Phillips et al, 2018)
+cluster_summary_channel1 <- hclust(dist.matrix, method = "average")
 
-plot(cluster_summary_channel1, hang=-1) # para ver o cluster! hang = -1 serve para esticar os raminhos, sem ele fica esquisito demais, vamos fazer?!. 
+plot(cluster_summary_channel1, hang=-1)
 
-# os numerous que aparecem no cladograma são os numerous das linhas (linha 1, linha 2, linha n).
+# No gráfico acima vemos que temos um grupo de mata 1a e outro de 2a. Mas tem uma execão a area 4. O que sera que tem na area 4? Se fossem dados reais eu teria que ir ver o que aconteceu, pois claramente as variáveis ambientais separaram mata 1a de 2a. O que isso pode querer dizer? Bom pode querer dizer que ela tem característica diferentes, ou que eu errei ao classificá-la no campo, ou é uma mata 1a com carcterísticas diferentes. Tem mais coisas? Nada muito relevante. Meu agrupamento separa esses dois tipos de ambientes. Posso aplicar em várias situações diferentes. 
 
-# analisando o cluster eu posso ver que eu tenho, de cara, dois grandes agrupamentos. Mostrar os nós. Se você quiser você pode pedir para o R traçar linha e discutir. É um ponto de corte. Melhor é interpretar o que estamos enxergando. No eixo y o valor vai de 0 a 3.0, nesse caso, mas pode ir de 0 a infinito, depende da dist6ancia que você tem. Não é uma escala interpretável. 
+# Verificando o quanto o cluster de fato representa a matriz:
 
-library(MASS)
-s1 <- sammon(cluster_summary_channel1)
-
-# Melhorando o aspecto do seu cluster
-
-#Cluster na horizontal: porque ele dá mais espaço para escrever nomes!
-
-plot(as.dendrogram(cluster_summary_channel1), horiz=T) # eu transformer para um novo format e aceita o cluster na horizontal, que é bom para botar nomes. Fica mais legível!!). A interpretação não muda só o aspecto dele.
-#Colocando os nomes das unidades amostrais: porque o r coloca os numerous das linhas, e eu preciso dos nomes das unidades amostrais.
-
-#Desfazer e refazer a leitura dos dados: vou primeiro desler os dados e depois vou refazer a leitura 
-
-detach(dados) # limpa a memoria do R
-
-rm(dados) # remove o objeto se eu colocar o objeto aqui ele não conseguir ler.
-
-dados<-read.table("insetos.txt", h=T, row.names=1) # vou ler os dados e colocar row.names=1, ou seja, a coluna 1 é o nome das minhas variáveis, gerlamente, a gente usa numerous para indicar nossas UA, mas se eu quero que as unidades tenha nomes eu posso fazer a coluna UA com o nome das nos unidades amostrais. Com esse comando o R vai entender que o nome das linhas do meu cluster deverá ser o que está escrito na primeira coluna!.
-
-attach(dados)
-
-#Refazendo as etapas, pois a numeração das colunas mudou: a primeira coluna é uma coluna de nomes, então a numeração das colunas mudou, assim a temperature não está mais na coluna 4 e sim na 3, certo?
-
-var.amb<-dados[,3:6]
-
-var.amb.pad<-decostand(var.amb, method="standardize")
-
-dist.amb<-dist(var.amb.pad, method="euclid")
-
-cluster.amb<-hclust(dist.amb, method="average")
-
-plot(as.dendrogram(cluster.amb), horiz=T) # agora aparece com os nomes. Existe um comando para criar a janela maior, mas ele nem sempre é necessario.
+# quando eu faço a matriz reversa eu tenho uma matriz cofenética, ou seja, é a matriz a partir do cluste, no exemplo da aula teórica sria o seguinte: eu construiria uma matriz cofenética que teria o seguintes valores:
 
 
+# A distância de A para B e de B para C sera o valor de 5.7, que é a media das dusa distâncias da matriz original, pois usamos o método de UPGMA, ou seja é a distância do B para o agrupamento A e C.
+# Olha que sacada! Pode ser que nos meus dados a distância de um ponto para o outro varie muito e na hora que eu uso a media para fazer a distâncias dos agrupamentos haja muita discrepância. Então tanto o cluster quanto a minha matriz cofenética (que são a mesma coisa, né?), não representam muito bem a minha matriz original, certo? Ele tá distorcendo, porque usando as medias le não está representando nem uma coisa nem outra. Então eu posso fazer a distância simples ou a completa? Poderia, mas ele também vai distorcer. Então o que vai acontecer? Toda as vezes que eu olhar para o cluster eu tenho que perguntar, ele representa bem meus dados originais? Como sei isso? Eu calculo a matriz cofenética e calculo o quanto ela me se parece com a minha matriz original. Usando uma métrica de correlação (comando cor que é a correlação de Pearson). Se a matriz original e a cofenética são muito parecidas, com a correlação perto de 1, eu fico muito confiante que o cluster representa bem meus dados originais. Se não, eu não devo usar o cluster, poise le não irá representar meus dados reias. Para que serve o cluster? Só para representar a matriz graficamente! Quando eu olho a matriz é difícil de interpreter, aí uso o cluster para interpreter, se ele não representa a matriz original então eu não deveria usar ele para nada!
+
+matriz.cof<-cophenetic(cluster_summary_channel1) # calculando a matriz cofenética, lembrando que é do cluster original. Ë uma outra matriz que foi baseada no cluster  é voltar o cluster para uma matriz.
+
+cor(matriz.cof, dist.matrix) # agora calculo o coeficiente de correlação cofenético  que é a correlação da matriz cofenética (que é o meu cluster) e da matriz original. Ou seja, é uma medida de 0 a 1 de quanto o cluster representou os seus dados.
+
+# No nosso exemplo o valor foi 0.7386 
+
+#Usualmente o corte é feito em 0.7  a maioria dos autores na literature usa esse valor, mas ele é subjetivo! Se o valor do seu coeficiente é 0.7 ou mais quer dizer que seu cluster representa bem sua matriz original, se não, não representa. Por outro lado se seu coeficiente de correlação cofenética ficou abaixo disso, significa que seu cluster não representa muito bem sua matriz original. Assim, você abandona o cluster. Não presta para nada! Aí o que eu faço? Aí posso usar uma PCA (análise de component principal), que é um pouco mais flexivel! O cluster tem uma interpretação intuitive, mas as vezes ele não presta para nada! 
+# O CALCULA DO COEFICIENTE DE CORRELAÇÃO COFENÉTICO É OBRIGATÓRIO!!!! SEMPRE TEM QUE USAR! Se um cluster não tem esse coeficiente eu não sei se o cluster representa ou não os meus dados originais! 
+# Hipótese da banca futura == você nunca sabe quem vai estar na banca!
+
+#Testing which is the best K number of clusters using the three available methods.
+library(factoextra)
+fviz_nbclust(df, FUNcluster = hcut, method = "wss", k.max = 20, verbose = T)
+
+fviz_nbclust(df, FUNcluster = hcut, method = "gap_stat", k.max = 20, verbose = T)
+
+fviz_nbclust(df, FUNcluster = hcut, method = "silhouette", k.max = 20, verbose = T)
+
+cut_avg <- cutree(cluster_summary_channel1, h = 50.5) #splitting the results into 20 clusters - arbitrary i looked the dendogram and simply decided this was a good number#
+
+cluster_summary_channel1_df <- mutate(df, cluster = cut_avg, cluster_order = cluster_summary_channel1) #assigning the cluster number to the df - now you'll be able to inspect# 
+
+#write.csv(cluster_summary_channel2_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
+ 
+
+cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv")) %>% 
+  separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE) %>%
+  select(., -c(X.1, X.2, X.3)) %>%
+  #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
+
+  count <- count(cluster_summary_channel1_df, cluster) #number of observations per cluster#
+
+inspection_minutes <- filter(cluster_summary_channel1_df, cluster == "20") %>% 
+  sample_n(., size = 3, replace = F) %>% 
+  #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20ClusterInspection6_SummaryIndices.csv"))
 
 
 
@@ -154,27 +129,7 @@ par(mar=c(3,2,1,5)) # ajustando o tamanho das margens
 plot(cluster2.amb, horiz=T) # ploto e fica fácil de entender o que está acontecendo
 
 
-# No gráfico acima vemos que temos um grupo de mata 1a e outro de 2a. Mas tem uma execão a area 4. O que sera que tem na area 4? Se fossem dados reais eu teria que ir ver o que aconteceu, pois claramente as variáveis ambientais separaram mata 1a de 2a. O que isso pode querer dizer? Bom pode querer dizer que ela tem característica diferentes, ou que eu errei ao classificá-la no campo, ou é uma mata 1a com carcterísticas diferentes. Tem mais coisas? Nada muito relevante. Meu agrupamento separa esses dois tipos de ambientes. Posso aplicar em várias situações diferentes. 
 
-# Verificando o quanto o cluster de fato representa a matriz:
-
-# quando eu faço a matriz reversa eu tenho uma matriz cofenética, ou seja, é a matriz a partir do cluste, no exemplo da aula teórica sria o seguinte: eu construiria uma matriz cofenética que teria o seguintes valores:
-
-
-# A distância de A para B e de B para C sera o valor de 5.7, que é a media das dusa distâncias da matriz original, pois usamos o método de UPGMA, ou seja é a distância do B para o agrupamento A e C.
-# Olha que sacada! Pode ser que nos meus dados a distância de um ponto para o outro varie muito e na hora que eu uso a media para fazer a distâncias dos agrupamentos haja muita discrepância. Então tanto o cluster quanto a minha matriz cofenética (que são a mesma coisa, né?), não representam muito bem a minha matriz original, certo? Ele tá distorcendo, porque usando as medias le não está representando nem uma coisa nem outra. Então eu posso fazer a distância simples ou a completa? Poderia, mas ele também vai distorcer. Então o que vai acontecer? Toda as vezes que eu olhar para o cluster eu tenho que perguntar, ele representa bem meus dados originais? Como sei isso? Eu calculo a matriz cofenética e calculo o quanto ela me se parece com a minha matriz original. Usando uma métrica de correlação (comando cor que é a correlação de Pearson). Se a matriz original e a cofenética são muito parecidas, com a correlação perto de 1, eu fico muito confiante que o cluster representa bem meus dados originais. Se não, eu não devo usar o cluster, poise le não irá representar meus dados reias. Para que serve o cluster? Só para representar a matriz graficamente! Quando eu olho a matriz é difícil de interpreter, aí uso o cluster para interpreter, se ele não representa a matriz original então eu não deveria usar ele para nada!
-
-
-
-matriz.cof<-cophenetic(cluster.amb) # calculando a matriz cofenética, lembrando que é do cluster original. Ë uma outra matriz que foi baseada no cluster  é voltar o cluster para uma matriz.
-
-cor(matriz.cof, dist.amb) # agora calculo o coeficiente de correlação cofenético  que é a correlação da matriz cofenética (que é o meu cluster) e da matriz original. Ou seja, é uma medida de 0 a 1 de quanto o cluster representou os seus dados.
-
-# No nosso exemplo o valor foi 0.7386 
-
-#Usualmente o corte é feito em 0.7  a maioria dos autores na literature usa esse valor, mas ele é subjetivo! Se o valor do seu coeficiente é 0.7 ou mais quer dizer que seu cluster representa bem sua matriz original, se não, não representa. Por outro lado se seu coeficiente de correlação cofenética ficou abaixo disso, significa que seu cluster não representa muito bem sua matriz original. Assim, você abandona o cluster. Não presta para nada! Aí o que eu faço? Aí posso usar uma PCA (análise de component principal), que é um pouco mais flexivel! O cluster tem uma interpretação intuitive, mas as vezes ele não presta para nada! 
-# O CALCULA DO COEFICIENTE DE CORRELAÇÃO COFENÉTICO É OBRIGATÓRIO!!!! SEMPRE TEM QUE USAR! Se um cluster não tem esse coeficiente eu não sei se o cluster representa ou não os meus dados originais! 
-# Hipótese da banca futura == você nunca sabe quem vai estar na banca!
 
 ##################################
 
