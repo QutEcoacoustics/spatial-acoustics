@@ -11,6 +11,9 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
+getDataPath <- function (...) {
+  return(file.path("C:/Users/Nina Scarpelli/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
+}
 
 ##SM4 Fieldwork - Reading the data - using the normalised table output from normilisingindices.R - after normalising and excluding highly correlated ones
 
@@ -72,10 +75,26 @@ cluster_summary_channel1_df <- mutate(df, cluster = cut_avg, cluster_order = clu
 #write.csv(cluster_summary_channel2_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
  
 
-cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv")) %>% 
-  separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE) %>%
-  select(., -c(X.1, X.2, X.3)) %>%
+cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster.csv")) %>% 
+  #separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE) %>%
+  #select(., -c(X.1, X.2, X.3)) %>%
   #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
+  #mutate(., FID = paste(FileName, ResultMinute, sep = "_"))
+#row.names(cluster_summary_channel1_df) <- cluster_summary_channel1_df$FID
+#df <- select(cluster_summary_channel1_df, -c(Snr, EntropyOfVarianceSpectrum, SptDensity)) %>% 
+  #separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE) %>% 
+  #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "Cluster_preparation.csv"))
+cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "Cluster_preparation.csv"), row.names = 28)
+
+df <- filter(cluster_summary_channel1_df, categorical_time == "morning")
+
+library(factoextra)
+fviz_nbclust(df[2:13], FUNcluster = hcut, method = "wss", k.max = 25, verbose = T)
+
+fviz_nbclust(df[2:13], FUNcluster = hcut, method = "gap_stat", k.max = 25, verbose = T)
+
+fviz_nbclust(df[2:13], FUNcluster = hcut, method = "silhouette", k.max = 25, verbose = T)
+  
 
   count <- count(cluster_summary_channel1_df, cluster) #number of observations per cluster#
 
