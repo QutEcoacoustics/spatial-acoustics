@@ -5,7 +5,7 @@ library(purrr)
 
 rm(list = ls())
 
-directory <- setwd("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/Results_Indices/")
+directory <- setwd("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/ResultsIndices_Channel1/")
 
 output_dir <- ("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/SummaryIndices_Channel1_Prepared/")
 
@@ -37,8 +37,8 @@ for (file in files) {
 files <- as.list(files)
 df <- lapply(files, read.csv) 
 df<-do.call(rbind, df)
-df <- select(df, BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName)
-  write.csv(df, "indices_all.csv")
+#df <- select(df, BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName, ResultMinute)
+  write.csv(df, "indices_all1.csv")
   
 g <- read.csv("test.csv")
 

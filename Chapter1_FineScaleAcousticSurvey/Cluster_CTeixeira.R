@@ -20,18 +20,27 @@ getDataPath <- function (...) {
 df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"), row.names = 23) %>% 
   separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE)
 
-df <- df[c(2, 4:12, 14:15)]
-
-#Loading necessary package
-
-library(vegan)
+#df <- select(df, -c(TemporalEntropy, EntropyOfAverageSpectrum))
 
 #correlation matrix between normalised indices
-cor <- abs(cor(df[2:16], use = "complete.obs", method = "spearman")) %>% 
-  write.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "correlationmatrix_afterwindremoval.csv"))
-pairs(df[2:16])
+#cor <- abs(cor(df[2:8], use = "complete.obs", method = "spearman")) %>% 
+  #write.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "correlationmatrix4.csv")) #Highly correlated indices removed
 
-# Para construer um cluster tem que ser por etapas. A 1a etapa é construir uma matriz de distância:
+# The cluster need to be done by steps. First of all we need to verify if the data is clusterable
+library(factoextra)
+
+#This dataset has been prepared according to the steps above: first removing indices with NA values; Second removing the highly correlated indices and then grouping the dataset according to the timing - both 4 and 8 groups per day. 4 groups are the following: (1) 00:00 to 06:00 - night; (2) 06:00 to 12:00 - morning; (3) 12:00 to 18:00 - afternoon; (4) 18:00 to 00:00 - night. 8 groups are the following: (1) 00:00 to 03:00 - early night; (2) 03:00 to 06:00 - late night; (3) 06:00 to 09:00 - early morning; (4) 09:00 to 12:00 - late morning; (5) 12:00 to 15:00 - ealy afternoon,  (6) 15:00 to 18:00 - late aftternoon; (7) 18:00 to 21:00 - early evening; (5) 21:00 to 00:00 - late evening.
+cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "Cluster_preparation.csv"), row.names = 26) #After highly correlated removed; also after classification of 4 and 8 timing groups
+
+get_clust_tendency(df_total[8:14], n = 17714) #Result Hopking's stat: 0.0748 - Total dataset
+
+df <- filter(df_total, categorical_time_4groups == "morning") #Result Hopking's stat: evening - 0.07362925; morning - 
+
+get_clust_tendency(df[8:14], n = 6678, graph = F)
+
+d <- pairs(cluster_summary_channel1_df[2:10]) 
+
+
 
 dist.matrix <- dist(df[c(2, 4:12, 14:15)], method = "euclidean")
 
@@ -60,7 +69,7 @@ cor(matriz.cof, dist.matrix) # agora calculo o coeficiente de correlação cofen
 # O CALCULA DO COEFICIENTE DE CORRELAÇÃO COFENÉTICO É OBRIGATÓRIO!!!! SEMPRE TEM QUE USAR! Se um cluster não tem esse coeficiente eu não sei se o cluster representa ou não os meus dados originais! 
 # Hipótese da banca futura == você nunca sabe quem vai estar na banca!
 
-#Testing which is the best K number of clusters using the three available methods.
+#Testing which is the best K number of clusters using the three available methods - with the whole dataset the cluster tendency was not good, so we split the data into groups according to the time of the beginning of the recording
 library(factoextra)
 fviz_nbclust(df, FUNcluster = hcut, method = "wss", k.max = 20, verbose = T)
 
@@ -75,7 +84,11 @@ cluster_summary_channel1_df <- mutate(df, cluster = cut_avg, cluster_order = clu
 #write.csv(cluster_summary_channel2_df, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
  
 
-cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster.csv")) %>% 
+#cluster_summary_channel1 <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster.csv"))
+
+#df1 <- select(cluster_summary_channel1_df, 21:26)
+#df_total <- cbind(df1, df)
+#write.csv(df_total, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "Cluster_preparation.csv"))
   #separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE) %>%
   #select(., -c(X.1, X.2, X.3)) %>%
   #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "20Cluster1.csv"))
@@ -84,16 +97,44 @@ cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019"
 #df <- select(cluster_summary_channel1_df, -c(Snr, EntropyOfVarianceSpectrum, SptDensity)) %>% 
   #separate(., col = FileName, into = c("Point", "Date", "beginning_rec"), sep = "_", remove = FALSE) %>% 
   #write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "Cluster_preparation.csv"))
-cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "Cluster_preparation.csv"), row.names = 28)
 
-df <- filter(cluster_summary_channel1_df, categorical_time == "morning")
+#cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "Cluster_preparation.csv"), row.names = 27) %>% #After highly correlated removed; also after classification of 4 and 8 timing groups
+  #select(-X.1) %>% 
+  #select(X, Activity, EventsPerSecond, ClusterCount, everything())
+  
+
+df <- filter(cluster_summary_channel1_df, categorical_time_4groups == "evening")
+
+
+
+
+res.dist <- get_dist(df[2:13], stand = TRUE, method = "euclidean")
+summary(res.dist)
+
+fviz_dist(res.dist, 
+          gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+
+dist.matrix <- dist(df[2:13], method = "euclidean")
+
+library(cluster)
+
+earlyevening_cluster <- fanny(df[2:13], metric = "euclidean", k = 5, diss = F, memb.exp = 1)
+
+library(mclust)
+
+evening_cluster <- Mclust(df[2:13])
+
+
+matriz.cof <- cophenetic(cluster_morning) # calculando a matriz cofenética, lembrando que é do cluster original. Ë uma outra matriz que foi baseada no cluster  é voltar o cluster para uma matriz.
+
+coph_morning <- cor(matriz.cof, dist.matrix)
 
 library(factoextra)
-fviz_nbclust(df[2:13], FUNcluster = hcut, method = "wss", k.max = 25, verbose = T)
+fviz_nbclust(df[2:13], FUNcluster = kmeans, method = "wss", k.max = 30, verbose = T)
 
-fviz_nbclust(df[2:13], FUNcluster = hcut, method = "gap_stat", k.max = 25, verbose = T)
+fviz_nbclust(df[2:13], FUNcluster = kmeans, method = "gap_stat", k.max = 25, verbose = T)
 
-fviz_nbclust(df[2:13], FUNcluster = hcut, method = "silhouette", k.max = 25, verbose = T)
+fviz_nbclust(df[2:13], FUNcluster = kmeans, method = "silhouette", k.max = 25, verbose = T)
   
 
   count <- count(cluster_summary_channel1_df, cluster) #number of observations per cluster#
