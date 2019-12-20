@@ -32,7 +32,7 @@ library(factoextra)
 #This dataset has been prepared according to the steps above: first removing indices with NA values; Second removing the highly correlated indices and then grouping the dataset according to the timing - both 4 and 8 groups per day. 4 groups are the following: (1) 00:00 to 06:00 - night; (2) 06:00 to 12:00 - morning; (3) 12:00 to 18:00 - afternoon; (4) 18:00 to 00:00 - night. 8 groups are the following: (1) 00:00 to 03:00 - early night; (2) 03:00 to 06:00 - late night; (3) 06:00 to 09:00 - early morning; (4) 09:00 to 12:00 - late morning; (5) 12:00 to 15:00 - ealy afternoon,  (6) 15:00 to 18:00 - late aftternoon; (7) 18:00 to 21:00 - early evening; (5) 21:00 to 00:00 - late evening.
 cluster_summary_channel1_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "Cluster_preparation.csv"), row.names = 1) #After highly correlated removed; also after classification of 4 and 8 timing groups
 
-get_clust_tendency(cluster_summary_channel1_df[4], n = 17714, graph = F) #Result Hopking's stat: 0.0748 - Total dataset; Results index by index: BGN - 0.05396606; 
+get_clust_tendency(cluster_summary_channel1_df[8:14], n = 17714, graph = F) #Result Hopking's stat: 0.0748 - Total dataset; Results index by index: BGN - 0.05396606; NDSI: 0.9419656
 
 df <- filter(cluster_summary_channel1_df, categorical_time_8groups == "early_evening") #Result Hopking's stat: evening - 0.07362925; morning -  0.1398465; afternoon - 0.1623928; night - 0.07013735; early_night - 0.07555385; late_night - 0.08163642; early_morning - 0.1373064; late_morning: 0.2403525; early_afternoon - 0.1992878; late_afternoon - 0.1990164; early_evening - 0.08941015; late_evening - 0.09246284;
 
