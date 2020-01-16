@@ -33,7 +33,7 @@ indicesbytimeofday + scale_x_continuous(name = "Time (Beginning of recording in 
 #Plotting per hour per site
 
 indicesbytimeofday +
-  scale_x_continuous(name = "Time (Beginning of recording in hours)", breaks = c(00000, 060000, 120000, 180000, 240000)) +
+  scale_x_continuous(name = "Time (Beginning of recording in hours)", breaks = c(000000, 060000, 120000, 180000, 240000), labels = c("00", "06", "12", "18", "00")) +
   facet_wrap(PointData ~ .) +
 ggsave(getDataPath("Fieldwork_Bowra", "Oct2019", "Figures", "07.01.2020_indicesbytimeofdaypersite.jpg"))
 
