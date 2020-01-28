@@ -1,19 +1,17 @@
 library(tidyverse)
+rm(list = ls())
 
 getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra",  ...))
 }
 
-rm(list = ls())
-
 #Read the table with the info about the minutes - good and bad, etc
 InfoMinutes <- read.csv(getDataPath("Aug2019_Outputs_SpectralIndices", "ExcludedLinesPerRec.csv"))
 
-bad_minutes <- filter(InfoMinutes, status == "bad") %>% 
+bad_files <- filter(InfoMinutes, status == "bad") %>% 
   select(., filename) %>%
   unique(.)
   lapply(., as.character)
-  
 
 #List the files and open the tables containing the actual data to be manipulated
 library(reshape2)
@@ -28,10 +26,10 @@ sites <- files1[10,] %>%
   unique(.)
   
 
-str_match(sites, pattern = bad_minutes$site)
+str_match(sites, pattern = bad_files$site)
 
  
-files %>% pluck(files, bad_minutes)
+files %>% pluck(files, bad_files)
 
 for (file in files) {
   

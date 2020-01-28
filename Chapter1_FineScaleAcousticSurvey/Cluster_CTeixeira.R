@@ -48,8 +48,9 @@ df1 <- filter(cluster_summary_channel1_df, PointData == "WB11") #Result Hopking'
 unique(df$PointData)
 df_persite <- filter(df, PointData == "WB56")
 
-cor <- abs(cor(df_persite[2:16], use = "complete.obs", method = "spearman")) %>% 
-write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "17.01.2020_correlationmatrix_WB56.csv")) #Highly correlated indices removed
+selected_indices <- df %>% select(., 9:23,25:26)
+cor <- abs(cor(selected_indices, use = "complete.obs", method = "spearman")) %>% 
+write.csv(., getDataPath("Fieldwork_Bowra", "Aug2019_SummaryIndices_Prepared", "28.01.2020_correlationmatrix_AMdata.csv")) #Highly correlated indices removed
 
 
 get_clust_tendency(df[8:14], n = 3168, graph = F)
