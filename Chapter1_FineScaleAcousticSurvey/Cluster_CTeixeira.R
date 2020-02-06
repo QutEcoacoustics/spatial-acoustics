@@ -50,12 +50,32 @@ library(cluster)
 fuzzy <- fanny(cluster_summary_channel1_df[8:14], k = 10, metric = "euclidean", stand = F)
 summary(fuzzy)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 16db4e58a468b0ef6501d30d760b6e8ba2d642f4
 get_clust_tendency(cluster_summary_channel1_df[8:14], n = 17714, graph = F) #Result Hopking's stat: 0.0748 - Total dataset; Results index by index: BGN - 0.05396606; NDSI: 0.9419656
 
 get_clust_tendency(cluster_summary_channel1_df[12], n = 17714, graph = F) #Result Hopking's stat: 0.0748 - Total dataset; Results index by index: BGN - 0.05396606; HFC: 0.00945347; LFC: 0.007922821; ACI: 0.01070003; NDSI: 0.05803442; ClusterCount: 0.0004319773; Entropy of Variance Spectrum: 0.03215644
 
+<<<<<<< HEAD
+=======
+df <- filter(cluster_summary_channel1_df, PointData == "WB11" | PointData == "WB56")#Result Hopking's stat: evening - 0.07362925; morning -  0.1398465; afternoon - 0.1623928; night - 0.07013735; early_night - 0.07555385; late_night - 0.08163642; early_morning - 0.1373064; late_morning: 0.2403525; early_afternoon - 0.1992878; late_afternoon - 0.1990164; early_evening - 0.08941015; late_evening - 0.09246284;
 
-df <- filter(cluster_summary_channel1_df, PointData == "WB56") #Result Hopking's stat per time: evening - 0.07362925; morning -  0.1398465; afternoon - 0.1623928; night - 0.07013735; early_night - 0.07555385; late_night - 0.08163642; early_morning - 0.1373064; late_morning: 0.2403525; early_afternoon - 0.1992878; late_afternoon - 0.1990164; early_evening - 0.08941015; late_evening - 0.09246284; Result Hopking's stat per point: WB06 - 0.07920261; WB11 - 0.0789556; WB15 - 0.1083106; WB22 - 0.1210506; WB25 - 0.1386411; WB28 - 0.08522964; WB34 - 0.08539253; WB35 - 0.09270341; WB43 - 0.1126441; WB46 - 0.08705383; WB49 - 0.1125116; WB56 - 0.08190172.
+get_clust_tendency(cluster_summary_channel1_df[13:14], n = 2219, graph = F) #Get Hopkins stats for clay pan points - WB11 and WB56 - to NDSI (NDSI have a pretty similar pattern for both points). Result for NDSI: 0.05; NDSI + ClusterCount: 
+
+
+df1 <- filter(cluster_summary_channel1_df, PointData == "WB11") #Result Hopking's stat per time: evening - 0.07362925; morning -  0.1398465; afternoon - 0.1623928; night - 0.07013735; early_night - 0.07555385; late_night - 0.08163642; early_morning - 0.1373064; late_morning: 0.2403525; early_afternoon - 0.1992878; late_afternoon - 0.1990164; early_evening - 0.08941015; late_evening - 0.09246284; Result Hopking's stat per point: WB06 - 0.07920261; WB11 - 0.0789556; WB15 - 0.1083106; WB22 - 0.1210506; WB25 - 0.1386411; WB28 - 0.08522964; WB34 - 0.08539253; WB35 - 0.09270341; WB43 - 0.1126441; WB46 - 0.08705383; WB49 - 0.1125116; WB56 - 0.08190172.
+
+#correlation matrix by site
+unique(df$PointData)
+df_persite <- filter(df, PointData == "WB56")
+
+selected_indices <- df %>% select(., 9:23,25:26)
+cor <- abs(cor(selected_indices, use = "complete.obs", method = "spearman")) %>% 
+write.csv(., getDataPath("Fieldwork_Bowra", "Aug2019_SummaryIndices_Prepared", "28.01.2020_correlationmatrix_AMdata.csv")) #Highly correlated indices removed
+>>>>>>> 16db4e58a468b0ef6501d30d760b6e8ba2d642f4
+
 
 
 get_clust_tendency(df[8:14], n = 1105, graph = F)
