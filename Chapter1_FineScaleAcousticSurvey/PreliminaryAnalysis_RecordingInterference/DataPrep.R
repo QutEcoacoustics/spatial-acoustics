@@ -5,9 +5,9 @@ library(purrr)
 
 rm(list = ls())
 
-directory <- setwd("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/ResultsIndices_Channel1/")
+directory <- setwd("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Aug2019/")
 
-output_dir <- ("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019/SummaryIndices_Channel1_Prepared/")
+output_dir <- ("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Aug2019/Aug2019_SummaryIndices_Prepared/")
 
 files <- list.files(directory, pattern = ".Indices.csv", full.names = T, recursive = T)
 
@@ -16,12 +16,12 @@ name <- gsub(pattern = "__Towsey.Acoustic.Indices.csv", replacement = "", x = na
 
 for (file in files) {
  read.csv(file) %>% 
-    select(., BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName)
+    select(., BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName) %>% 
     #mutate(., FileName = name) %>%
     #select(., -X, -X.1, -X.2, -X.3, -X.4) %>%
-    #separate(., col = FileName, into = c("location", "rec", "other"), sep = "-", remove = F) %>% 
+    separate(., col = FileName, into = c("location", "rec", "other"), sep = "-", remove = F) %>% 
     #select(., -1, -X, -X.5, -1) %>% 
-    #separate(., col = other, into = c("point", "date", "time"), sep = "_", remove = T) %>%
+    separate(., col = other, into = c("point", "date", "time"), sep = "_", remove = T) %>%
     #select(., -path) %>%
     #select(., -Date, -test2) %>% 
     #separate(., col = test1, into = c("test1", "Transectpoint"), sep = "/", remove = T) %>% 
@@ -38,9 +38,12 @@ files <- as.list(files)
 df <- lapply(files, read.csv) 
 df<-do.call(rbind, df)
 #df <- select(df, BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName, ResultMinute)
+df <- separate(., col = FileName, into = c("location", "rec", "other"), sep = "-", remove = F)
   write.csv(df, "indices_all1.csv")
   
-g <- read.csv("test.csv")
+g <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Aug2019_PreliminaryAnalysis_RecordingInterferences/test.csv")
+g <- mutate(g, FID = paste(Transectpoint, rec, FileName, ResultStartSeconds, sep = "_"))
+write.csv(g, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Aug2019_SummaryIndices_Prepared/indices_all_AM.csv")
 
 
 #Pasting HOBOS data and the indices df together
