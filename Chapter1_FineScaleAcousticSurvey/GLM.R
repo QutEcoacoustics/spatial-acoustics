@@ -42,11 +42,17 @@ df_hobos1 <- mutate(df_hobos, Date = case_when(df_hobos$Date == "10/14/19" ~ "20
   mutate(., Time = gsub(x = Time, pattern = ":", replacement = ""))
 
 changing_hour <- function(string, pattern, replacement) {
-  mutate(df_IndicesAndVeg, "beginning_rec_modified" = str_replace_all(string, pattern, replacement))}
+  mutate(df_IndicesAndVeg, "beginning_rec_modified" = str_replace_all(string, pattern, replacement))
+}
+
+changing_hour <- function(data, string, pattern, replacement) {
+  return(mutate(data, "beginning_rec_modified" = str_replace_all(string, pattern, replacement)))
+}
+df_IndicesAndVeg6 <-  df_IndicesAndVeg6 %>% changing_hour(df_IndicesAndVeg6$beginning_rec_modified, "5929", "010000")
 
 unique(df_IndicesAndVeg$beginning_rec)
 unique(df_IndicesAndVeg6$beginning_rec_modified)
-df_IndicesAndVeg6 <- changing_hour(df_IndicesAndVeg6$beginning_rec_modified, "5929", "010000")
+df_IndicesAndVeg6 <- df_IndicesAndVeg6 %>% changing_hour(df_IndicesAndVeg6$beginning_rec_modified, "5929", "010000")
 
 write.csv(df_IndicesAndVeg6, getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "14.01.2019_glm_preparation.csv"))
 
