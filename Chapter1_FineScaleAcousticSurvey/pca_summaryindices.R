@@ -12,7 +12,7 @@ df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryInd
 
 #PCA for all the sites together
 
-resultado <- rda(df_Highlycorrelatedremoved[,1:9], scale = F)
+resultado <- rda(df[,11:17], scale = F)
 summary(resultado)
 biplot(resultado)
 ordihull(resultado, groups = df$PointData)
@@ -21,22 +21,31 @@ resultado$CA$u
 
 pc <- resultado$CA$u
 
-df_pc <- cbind(df_Highlycorrelatedremoved, pc)
+df_pc <- cbind(df, pc)
 
-df_wider <- gather(df_pc, c(PC1, PC2, PC3, PC4, PC5, PC6, PC7, PC8, PC9), key = "Index", value = "value")
+df_wider <- gather(df_pc, c(PC1, PC2, PC3, PC4, PC5, PC6, PC7), key = "Index", value = "value")
 
 screeplot(resultado, type = "l", npcs = 7, main = "Screeplot of the 9 PCs")
 abline(h = 1, col="red", lty=5)
 legend("topright", legend=c("Eigenvalue = 1"),
        col=c("red"), lty=5, cex=0.6)
 
-indicesbytimeofday <- ggplot(df_wider, aes(x = time, y = value)) +
-  geom_smooth(aes(colour = Index)) +
+df_meadian_pc2 <- group_by(df_pc, beginning_rec_modified) %>% 
+  summarise(median2 = median(PC2), sd2 = sd(PC2), min2 = min(PC2), max2 = max(PC2))
+
+df_medians_pcs <- left_join(x = df_medians_pcs, y = df_meadian_pc4)
+df_medians_pcs_wider <- gather(df_medians_pcs, key = "stat", value = "value")
+
+indicesbytimeofday <- ggplot(df_meadian_pc4, aes(x = beginning_rec_modified, y = median)) +
+  geom_pointrange(aes(ymin = min, ymax = max)) +
   theme_minimal() +
-  scale_y_continuous(name = "PC1 and PC2") +
-  ggtitle("PC1 and PC2 per time of day (in hours) - full dataset") 
+  scale_y_continuous(name = "PC4") +
+  ggtitle("PC4 medians per time of day (in hours) - full dataset") 
 indicesbytimeofday + scale_x_continuous(name = "Time (Beginning of recording in hours)", breaks = c(00000, 020000, 040000, 060000, 080000, 100000, 120000, 140000, 160000, 180000, 200000, 220000, 240000)) +
-  ggsave(getDataPath("Fieldwork_Bowra","Aug2019_SummaryIndices_Prepared", "Figures", "28.01.2020_pc1and2bytimeofday.jpg"))
+  ggsave(getDataPath("Fieldwork_Bowra","Aug2019_SummaryIndices_Prepared", "Figures", "07.02.2020_pc4medianbytimeofday_geompointrange.jpg"))
+
+df_pc1 <- mutate(df_pc, present_minutes = paste(beginning_rec_modified, ResultMinute, sep = "_"))
+p <- unique(df_pc1$present_minutes)
 
 
 filtered_byTransect <- filter(df_wider, Transect == "WA")

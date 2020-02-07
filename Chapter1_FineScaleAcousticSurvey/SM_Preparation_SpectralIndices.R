@@ -165,7 +165,7 @@ norm_df <- df %>% mutate_at(vars(1:15), scale)
 
 library(stringr)
 
-melted2 <- read.csv(getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SpectralIndices_WindMinAbove0.4.csv")) %>% 
+melted2 <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "SpectralIndices_WindMinAbove0.4.csv")) %>% 
   mutate(FID = str_sub(Var2, start = 1, end = 31))
 
 windy_minutes <- as.list(unique(melted2$FID))
@@ -181,13 +181,13 @@ name <- gsub(pattern = "__Towsey.Acoustic.Indices.csv", replacement = "", x = na
 files <- as.list(files)
 df <- lapply(files, read.csv) %>% 
   map(~ mutate(., FID = paste(.$FileName, .$ResultMinute, sep = "_"))) %>% 
-  map(~ mutate(., wind = match(FID, windy_minutes, nomatch = 0, incomparables = "NA"))) %>%
-  map(~ filter(., wind == 0)) %>% 
+  map(~ mutate(., wind = match(FID, windy_minutes, nomatch = "GoodMinutes", incomparables = "NA"))) %>%
+  #map(~ filter(., wind == 0)) %>% 
   map(~ select(., BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName, ResultMinute, wind, FID)) %>% 
   map(~ mutate_at(., vars(1:15), scale)) %>%
   map(~ separate(., col = FileName, into = c("Location", "Recorder", "PointData"), remove = F)) %>% 
   do.call(rbind, .) %>% 
-  write.csv(., getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved_test.csv"))
+  write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "07.02.2020_SummaryIndices_Channel1_WindRemoved_test.csv"))
 
 library(tidyverse)
 
@@ -198,5 +198,5 @@ test1 <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Techno
   select(., BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName, wind, ResultMinute, FID) %>% 
   mutate_at(., vars(1:15), scale) %>%
   separate(., col = FileName, into = c("Location", "Recorder", "PointData"), remove = F) %>% 
-  write.csv(., getDataPath("Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"))
+  write.csv(., getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"))
 
