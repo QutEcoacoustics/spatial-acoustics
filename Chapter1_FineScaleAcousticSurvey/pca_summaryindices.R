@@ -18,31 +18,48 @@ biplot(resultado)
 ordihull(resultado, groups = df$PointData)
 ls(resultado)
 resultado$CA$u
+summary(resultado)
 
 pc <- resultado$CA$u
 
-df_pc <- cbind(df, pc)
+df_pc <- cbind(df, pc) %>% 
+  write.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "16.03.2019_completedf_pca.csv"))
 
 df_wider <- gather(df_pc, c(PC1, PC2, PC3, PC4, PC5, PC6, PC7), key = "Index", value = "value")
 
-screeplot(resultado, type = "l", npcs = 7, main = "Screeplot of the 9 PCs")
-abline(h = 1, col="red", lty=5)
-legend("topright", legend=c("Eigenvalue = 1"),
-       col=c("red"), lty=5, cex=0.6)
+#screeplot(resultado, type = "l", npcs = 7, main = "Screeplot of the 9 PCs")
+#abline(h = 1, col="red", lty=5)
+#legend("topright", legend=c("Eigenvalue = 1"),
+       #col=c("red"), lty=5, cex=0.6)
 
-df_meadian_pc2 <- group_by(df_pc, beginning_rec_modified) %>% 
-  summarise(median2 = median(PC2), sd2 = sd(PC2), min2 = min(PC2), max2 = max(PC2))
+df_meadian_pc4 <- group_by(df_pc, beginning_rec_modified) %>% 
+  summarise(median4 = median(PC4), sd4 = sd(PC4), min4 = min(PC4), max4 = max(PC4))
 
 df_medians_pcs <- left_join(x = df_medians_pcs, y = df_meadian_pc4)
 df_medians_pcs_wider <- gather(df_medians_pcs, key = "stat", value = "value")
 
-indicesbytimeofday <- ggplot(df_meadian_pc4, aes(x = beginning_rec_modified, y = median)) +
-  geom_pointrange(aes(ymin = min, ymax = max)) +
+df_pc1to4 <- filter(df_wider, Index == "PC1" | Index == "PC2" | Index == "PC3" | Index == "PC4")
+
+indicesbytimeofday <- ggplot(df_pc1to4, aes(x = beginning_rec_modified, y = value)) +
+  geom_smooth(aes(colour = Index)) +
   theme_minimal() +
-  scale_y_continuous(name = "PC4") +
-  ggtitle("PC4 medians per time of day (in hours) - full dataset") 
+  scale_y_continuous(name = "PCs values") +
+  ggtitle("PCs 1, 2, 3 and 4 per time of day (in hours) - full dataset") 
 indicesbytimeofday + scale_x_continuous(name = "Time (Beginning of recording in hours)", breaks = c(00000, 020000, 040000, 060000, 080000, 100000, 120000, 140000, 160000, 180000, 200000, 220000, 240000)) +
-  ggsave(getDataPath("Fieldwork_Bowra","Aug2019_SummaryIndices_Prepared", "Figures", "07.02.2020_pc4medianbytimeofday_geompointrange.jpg"))
+  ggsave(getDataPath("Fieldwork_Bowra","Oct2019", "Figures", "17.03.2020_pc1to4_geomsmooth.jpg"))
+
+#Graph index value medians per time of day - then do the kruskall wallis#
+
+kruskal.test(df_pc$PC1~df_pc$PointData)
+kruskal.test(df_pc$PC1~df_pc$beginning_rec_modified)
+pairwise.wilcox.test(df_pc$PC1, df_pc$PointData, p.adj = "bonferroni")
+pairwise.wilcox.test(df_pc$PC1, df_pc$beginning_rec_modified, p.adj = "bonferroni")
+
+pairwise.wilcox.test(df_pc$PC2, df_pc$PointData, p.adj = "bonferroni")
+pairwise.wilcox.test(df_pc$PC2, df_pc$beginning_rec_modified, p.adj = "bonferroni")
+
+pairwise.wilcox.test(df_pc$PC3, df_pc$PointData, p.adj = "bonferroni")
+pairwise.wilcox.test(df_pc$PC3, df_pc$beginning_rec_modified, p.adj = "bonferroni")
 
 df_pc1 <- mutate(df_pc, present_minutes = paste(beginning_rec_modified, ResultMinute, sep = "_"))
 p <- unique(df_pc1$present_minutes)
@@ -50,17 +67,17 @@ p <- unique(df_pc1$present_minutes)
 
 filtered_byTransect <- filter(df_wider, Transect == "WA")
 
-indicesbytimeofday_pertransect <- ggplot(filtered_byTransect, aes(x = time, y = value)) +
+indicesbytimeofday_pertransect <- ggplot(df_wider, aes(x = time, y = value)) +
   geom_smooth(aes(colour = Index)) +
   theme_minimal() +
   scale_y_continuous(name = "PC1 and PC2") +
   ggtitle("PC1 and PC2 per time of day (in hours) - full dataset") 
 
 
-indicesbytimeofday_pertransect +
+indicesbytimeofday +
   scale_x_continuous(name = "Time (Beginning of recording in hours)", breaks = c(000000, 060000, 120000, 180000, 240000), labels = c("00", "06", "12", "18", "00")) +
-  facet_wrap(Transectpoint ~ .) +
-  ggsave(getDataPath("Fieldwork_Bowra", "Aug2019_SummaryIndices_Prepared", "Figures", "28.01.2020_pcabytimeofdaypersite_PCAWA.jpg"))
+  facet_wrap(PointData ~ .) +
+  ggsave(getDataPath("Fieldwork_Bowra", "Oct2019", "Figures", "17.03.2020_pcabytimeofdaypersite.jpg"))
 
 cor <- abs(cor(df_pc[91:97], use = "complete.obs", method = "spearman")) %>% 
   write.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "correlationmatrix_PCAwholedata.csv")) 

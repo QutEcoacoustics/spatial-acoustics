@@ -1,0 +1,28 @@
+---
+title: "PCAReport_Oct2019Bowra"
+output: html_document
+---
+
+#PCA
+```{r}
+getDataPath <- function (...) {
+  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
+}
+
+library(vegan)
+library(tidyverse)
+library(ggplot2)
+
+df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "14.01.2019_glm_preparation.csv"))
+
+#PCA for all the sites together
+
+resultado <- rda(df[,11:17], scale = F)
+```
+```{r eval = T}
+summary(resultado)
+```
+```{r}
+df_pc <- cbind(df, pc) %>% 
+  write.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SummaryIndices_Channel1", "16.03.2019_completedf_pca.csv"))
+```
