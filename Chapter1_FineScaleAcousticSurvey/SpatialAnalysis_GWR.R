@@ -129,12 +129,23 @@ cor <- abs(cor(test, use = "complete.obs", method = "spearman"))
 final_df <- cbind(test, other_variables)
 write.csv(final_df, getDataPath("Fieldwork_Bowra", "Oct2019", "SummaryIndices_Channel1_Prepared", "12.04.2020_gwrdata.csv"))
 #Separating df into 4 categorical times#
-df_2 <- filter(final_df, final_df$categorical_time_4groups == "morning")
+final_df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "SummaryIndices_Channel1_Prepared", "12.04.2020_gwrdata.csv"))
+
+ggplot(final_df, aes(x = as.factor(LONG), y = AcousticComplexity)) +
+  geom_col(position = "dodge", aes(fill = categorical_time_4groups)) +
+  theme_classic() +
+  theme(panel.border = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") +
+  labs(title = "Acoustic Complexity per point", x = "Point", y = "Acoustic Complexity", fill = "Day period") +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) +
+  facet_wrap(~ categorical_time_4groups)
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_AcousticComplexityperSite.tiff"))
+
+df_2 <- filter(final_df, final_df$categorical_time_4groups == "afternoon")
 
 #creating spatial df#
 #Morning#
 LatLong <- cbind(df_2$LAT, df_2$LONG)
-spatialdf <- SpatialPointsDataFrame(coords = LatLong, data = df_2)
+spatialdf <- SpatialPointsDataFrame(coords = LatLong, data = df_2, proj4string = CRS("+proj=longlat +datum=WGS84"))
 
 dist_matrix <- gw.dist(dp.locat = coordinates(spatialdf), p = )
 
@@ -157,18 +168,23 @@ library(RColorBrewer)
 
 BD_sel <- bw.gwr(AcousticComplexity ~ CanopyCover + CanopyHeight + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH, data = spatialdf, approach = "AIC", kernel = "gaussian", adaptive = F, dMat = dist_matrix)
 
-summary_stats <- gwss(data = spatialdf, vars = c("AcousticComplexity", "CanopyCover", "CanopyHeight", "SubcanopyHeight", "Slope", "Aspect", "Elevation", "AVERAGE_NT_DIST", "AVERAGE_NS_DIST", "AVERAGE_GC_NG", "AVERAGE_GC_NF", "AVERAGE_GC_SH" ), bw = BD_sel, kernel = "gaussian", adaptive = T, dMat = dist_matrix)
+summary_stats <- gwss(data = spatialdf, vars = c("AcousticComplexity", "CanopyCover", "CanopyHeight", "SubcanopyHeight", "Slope", "Aspect", "Elevation", "AVERAGE_NT_DIST", "AVERAGE_NS_DIST", "AVERAGE_GC_NG", "AVERAGE_GC_NF", "AVERAGE_GC_SH" ), bw = BD_sel, kernel = "gaussian", adaptive = F, dMat = dist_matrix)
 
-library(rgdal)
-library(maptools)
-library(raster)
+afternoon_summarydf <- as.data.frame(summary_stats$SDF)
+  
+afternoon_df_gather <- gather(afternoon_summarydf, -c(coords.x1, coords.x2), key = "Stat", value = "Value") %>% 
+  filter(Stat == "AcousticComplexity_LSD" | Stat == "CanopyCover_LSD" | Stat == "CanopyHeight_LSD" | Stat == "SubcanopyHeight_LSD" | Stat == "Slope_LSD" | Stat == "Aspect_LSD" | Stat == "Elevation_LSD" | Stat == "AVERAGE_NT_DIST_LSD" | Stat == "AVERAGE_NS_DIST_LSD" | Stat == "AVERAGE_GC_NG_LSD" | Stat == "AVERAGE_GC_NF_LSD" | Stat == "AVERAGE_GC_SH_LSD")
 
-k2 <- density(summary_stats$SDF$CanopyCover_LSD, bw = BD_sel)
-plot(k2)
+night_df_gather$time_4groups <- "night"
+morning_df_gather$time_4groups <- "morning"
+afternoon_df_gather$time_4groups <- "afternoon"
+evening_df_gather$time_4groups <- "evening"
 
-palette <- brewer.pal(8, "Reds")
-names(summary_stats$SDF)
-spplot(summary_stats$SDF, "CanopyCover_LSD", col.regions = palette, main = "Kernel Density estimation for Morning SD - Canopy Cover")
+df_SDall <- rbind(evening_df_gather, morning_df_gather, afternoon_df_gather, evening_df_gather)
+
+ggplot(evening_df_gather, aes(x = coords.x2, y = Value, colour = Stat)) +
+  geom_line() #+
+  #facet_wrap(~ Stat)
 
 model_selection <- model.selection.gwr(DeVar =  "AcousticComplexity", InDeVars = c("CanopyCover", "CanopyHeight", "SubcanopyHeight", "Slope", "Aspect", "Elevation", "AVERAGE_NT_DIST", "AVERAGE_NS_DIST", "AVERAGE_GC_NG", "AVERAGE_GC_NF", "AVERAGE_GC_SH"), data = spatialdf, bw = BD_sel, approach = "AIC", adaptive = F, kernel = "gaussian", dMat = dist_matrix)
 model_list <- model_selection[[1]]
@@ -180,10 +196,175 @@ model.list <- model.sort.gwr(model_selection, numVars = 11, ruler.vector = model
 GWR_model_selection <- plot(model.list[[2]][,2], col = "black", pch = 20, lty = 5, main = "Alternative view of GWR model selection procedure", ylab = "AICc", xlab = "Model number", type = "b")
 
 #COmplete Model - seems to be the lower AIC value#
-library(spgwr)
-bd <- bw.sel(AcousticComplexity ~ CanopyCover + CanopyHeight + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH, data = spatialdf, gweight = gwr.Gauss)
 
-gwr.res <- ggwr(AcousticComplexity ~ CanopyCover + CanopyHeight + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH, data = spatialdf,  bandwidth = bd, adapt = F,family = gaussian())
+gwr.res <- gwr.basic(AcousticComplexity ~ CanopyCover + CanopyHeight + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH, data = spatialdf,  bw = BD_sel, adaptive = F)
+
+afternoon_model <- as.data.frame(gwr.res$SDF)
+
+night_model$time_4groups <- "night"
+afternoon_model$time_4groups <- "afternoon"
+morning_model$time_4groups <- "morning"
+evening_model$time_4groups <- "evening"
+
+all_model <- rbind(night_model, afternoon_model, morning_model, evening_model)
+
+#Local r2 per point
+ggplot(all_model, aes(x = as.factor(coords.x2), y = as.numeric(Local_R2))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(panel.border = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  labs(title = "Local R2 values per point", x = "Point", y = "Local R2", fill = "Day period") +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "15.04.2020_gwrr2valuespersite.tiff"))
+  
+
+df_gather_evening <- gather(evening_model, -c(coords.x1, coords.x2), key = "coefficient_name", value = "coeffiecient_value")
+unique(df_gather_afternoon$coefficient_name)
+
+evening_coefficients <- filter(df_gather_evening, coefficient_name == "CanopyCover"  | coefficient_name == "CanopyHeight" | coefficient_name == "SubcanopyHeight" | coefficient_name == "Slope" | coefficient_name == "Aspect" | coefficient_name == "Elevation" | coefficient_name == "AVERAGE_NT_DIST" | coefficient_name == "AVERAGE_NS_DIST" | coefficient_name == "AVERAGE_GC_NG" | coefficient_name == "AVERAGE_GC_NF" | coefficient_name == "AVERAGE_GC_SH" | coefficient_name == "y" | coefficient_name == "Local_R2")
+
+
+afternoon_coefficients %>% filter(coefficient_name == "y") %>% 
+  ggplot(., aes(x = as.factor(coords.x2), y = coeffiecient_value)) +
+  geom_violin() +
+  theme_classic() +
+  theme(panel.border = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  labs(title = "Afternoon Y variation per point", x = "Point", y = "Y") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "14.04.2020_gwrYvaluespersite_afternoon.tiff"))
+
+evening_coefficients %>% filter(coefficient_name != "y") %>% 
+  ggplot(., aes(x = coords.x2, y = coeffiecient_value, colour = coefficient_name)) +
+  geom_point() #+
+  #facet_wrap(~ time_4groups)
+
+night_coefficients$time_4groups <- "night"
+morning_coefficients$time_4groups <- "morning"
+afternoon_coefficients$time_4groups <- "afternoon"
+evening_coefficients$time_4groups <- "evening"
+
+coefficients_all <- rbind(night_coefficients, morning_coefficients, afternoon_coefficients, evening_coefficients)
+write.csv(coefficients_all, getDataPath("Fieldwork_Bowra", "Oct2019", "SummaryIndices_Channel1_Prepared", "12.04.2020_gwrcoefficients.csv"))
+
+unique(coefficients_all$coefficient_name)
+signif(as.numeric(coefficients_all$coeffiecient_value, 2))
+
+#Canopy Cover#
+coefficients_all %>% filter(coefficient_name == "CanopyCover") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Canopy cover coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRcanopycoverperpoint.tiff"))
+
+#CanopyHeight#
+coefficients_all %>% filter(coefficient_name == "CanopyHeight") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Canopy height coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRcanopyheightperpoint.tiff"))
+
+#SubcanopyHeight#
+coefficients_all %>% filter(coefficient_name == "SubcanopyHeight") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Subcanopy height coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRsubcanopyheightperpoint.tiff"))
+
+#Slope#
+coefficients_all %>% filter(coefficient_name == "Slope") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Slope coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRSlopeperpoint.tiff"))
+
+#Aspect#
+coefficients_all %>% filter(coefficient_name == "Aspect") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Aspect coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRAspectperpoint.tiff"))
+
+#Elevation#
+coefficients_all %>% filter(coefficient_name == "Elevation") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Elevation coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRElevationperpoint.tiff"))
+
+#AVERAGE_NT_DIST#
+coefficients_all %>% filter(coefficient_name == "AVERAGE_NT_DIST") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Distance to nearest tree coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRAVERAGE_NT_DISTperpoint.tiff"))
+
+#AVERAGE_NS_DIST#
+coefficients_all %>% filter(coefficient_name == "AVERAGE_NS_DIST") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Distance to nearest shrub coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRAVERAGE_NS_DISTperpoint.tiff"))
+
+#AVERAGE_GC_NG#
+coefficients_all %>% filter(coefficient_name == "AVERAGE_GC_NG") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Ground Cover (native grass) coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRAVERAGE_GC_NGperpoint.tiff"))
+
+#AVERAGE_GC_NF#
+coefficients_all %>% filter(coefficient_name == "AVERAGE_GC_NF") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Ground Cover (native forbs) coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRAVERAGE_GC_NFperpoint.tiff"))
+
+#AVERAGE_GC_SH#
+coefficients_all %>% filter(coefficient_name == "AVERAGE_GC_SH") %>%
+  ggplot(., aes(x = as.factor(coords.x2), y = as.numeric(coeffiecient_value))) +
+  geom_col(position = "dodge", aes(fill = time_4groups)) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd"), labels = c("Afternoon", "Evening", "Morning", "Night")) + 
+  labs(title = "Ground Cover (shrub) coefficients per point", x = "Point", y = "Coefficients", fill = "Day period") +
+  ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_GWRAVERAGE_GC_SHperpoint.tiff"))
+
+ggplot(coefficients_all, aes(x = coords.x2, y = CanopyCover, colour = time_4groups)) +
+  geom_line(size = 1) +
+  theme_classic() +
+  theme(panel.border = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  labs(title = "Afternoon Y variation per point", x = "Point", y = "Y") #+
+  #ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "14.04.2020_gwrYvaluespersite_afternoon.tiff"))
+
 
 glm <- glm(AcousticComplexity ~ CanopyCover + CanopyHeight + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH, data = df_2, family = gaussian())
 null.model <- glm(AcousticComplexity ~ 1, data = df_2)
