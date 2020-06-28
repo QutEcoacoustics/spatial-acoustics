@@ -125,3 +125,26 @@ data1 <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Techno
   mutate(., "recorder" = "REC08", "point" = "018", "transect" = "WA") %>% 
   write.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/PreliminaryAnalysis_RecordingInterferences/Tests/WA018_REC08_Towsey.Acoustic.CVR_MODIFIED.csv")
 
+
+
+df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "SummaryIndices_Channel1_Prepared", "12.04.2020_gwrdata.csv"))
+
+library(stringr)
+
+df1 <- mutate(df, beginning_rec_modified1 = sprintf())
+
+df <- mutate(df, rec_hour_mod = str_pad(beginning_rec_modified, width = 6, side = "left", pad = "0"))
+
+df <- mutate(df, minute_mod = str_pad(ResultMinute, width = 2, side = "left", pad = "0"))
+
+
+df <- mutate(df, hour_min_start = str_sub(rec_hour_mod, start = 1, end = 2))
+df <- mutate(df, time_rec = paste(hour_min_start, minute_mod, sep = ""))
+df <- mutate(df, time_rec_charac = str_pad(time_rec, width = 6, side = "right", pad = "0"))
+df <- mutate(df, time_rec_numer = as.numeric(time_rec_charac))
+
+write.csv(df2, getDataPath("Chapter1_FineScaleAcousticSurvey", "08.06.2020_completedata.csv"))
+
+
+
+               
