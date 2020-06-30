@@ -20,18 +20,22 @@ df_Highlycorrelatedremoved <- df_scaled[c(9, 14, 16, 19:23, 25, 27:40)]
 write.csv(df_Highlycorrelatedremoved, getDataPath("Fieldwork_Bowra", "Aug2019_SummaryIndices_Prepared", "28.01.2020_AMdata_highlycorrelatedremoved.csv"))
 
 #Putting the indices as a variable
-df_wider <- gather(df_Highlycorrelatedremoved, c(BackgroundNoise, HighFreqCover, LowFreqCover, EntropyOfAverageSpectrum, EntropyOfVarianceSpectrum, EntropyOfPeaksSpectrum, EntropyOfCoVSpectrum, ClusterCount, Ndsi), key = "Index", value = "value")
+df_wider <- gather(df, c(BackgroundNoise, HighFreqCover, LowFreqCover, AcousticComplexity, EntropyOfVarianceSpectrum, ClusterCount, Ndsi), key = "Index", value = "value")
+
+df <- mutate(df, time_rec_numer = str_pad(as.integer(time_rec_numer), width = 6, side = "left", pad = "0"))
 
 
 
 #Plotting all the sites together
 
-indicesbytimeofday <- ggplot(df_wider, aes(x = time, y = value)) +
+indicesbytimeofday <- ggplot(df_wider, aes(x = time_rec_numer, y = value)) +
   geom_smooth(aes(colour = Index)) +
   theme_minimal() +
   scale_y_continuous(name = "Index Scaled Values") +
-  ggtitle("Scaled Indices Values by time of the day (in hours)") 
-indicesbytimeofday + scale_x_continuous(name = "Time (Beginning of recording in hours)", breaks = c(00000, 020000, 040000, 060000, 080000, 100000, 120000, 140000, 160000, 180000, 200000, 220000, 240000)) +
+  ggtitle("Scaled Indices Values by time of the day (in hours)") +
+  facet_wrap(Date~.)
+indicesbytimeofday + #scale_x_continuous(name = "Time (Beginning of recording in hours)", breaks = c(00000, 020000, 040000, 060000, 080000, 100000, 120000, 140000, 160000, 180000, 200000, 220000, 240000)) +
+  
 ggsave(getDataPath("Fieldwork_Bowra", "Aug2019_SummaryIndices_Prepared", "Figures", "18.01.2020_indicesbytimeofday.jpg"))
 
 
