@@ -69,6 +69,8 @@ df_IndicesAndVeg7 <- mutate(df_IndicesAndVeg6, new_ResultMinute = case_when(Resu
 p <- unique(select(df_IndicesAndVeg6, new_ResultMinute, ResultMinute))
 rm(p)
 
+unique(df_complete$beginning_rec_modified)
+
 df_IndicesAndVeg8 <- mutate(df_IndicesAndVeg7, beginning_rec_modified = stri_sub_replace(df_IndicesAndVeg7$beginning_rec_modified, from = 3, to = 4, replacement = new_ResultMinute))
 
 df_IndicesAndVeg9 <- mutate(df_IndicesAndVeg8, new_FID = paste(PointData, Date, beginning_rec_modified, sep = "_"))

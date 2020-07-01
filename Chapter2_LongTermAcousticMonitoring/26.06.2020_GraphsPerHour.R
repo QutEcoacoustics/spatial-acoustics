@@ -15,7 +15,7 @@ df <- read.csv(getDataPath("SERF_AI_PreProcessed", "26.06.2020_131415FinalIndice
 #Putting the indices as a variable
 df_wider <- gather(df, c(BackgroundNoise, AvgSnrOfActiveFrames, EventsPerSecond, HighFreqCover, LowFreqCover, AcousticComplexity, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfCoVSpectrum, ClusterCount, Ndsi, SptDensity), key = "Index", value = "value")
 
-unique(df_wider$Index)
+unique(df$FileName)
 
 unique(df_wider$month)
 
