@@ -23,11 +23,11 @@ df <- lapply(files, read.csv)
 df<-do.call(rbind, df)
 df <- select(df, BackgroundNoise, Snr, Activity, AvgSnrOfActiveFrames, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, EntropyOfCoVSpectrum, ClusterCount, Ndsi, SptDensity, FileName, ResultMinute, ResultStartSeconds)
 df <- separate(df, col = FileName, into = c("location", "date", "time", "file_id"), sep = "_", remove = F)
-  write.csv(df, getDataPath("SERF_AI_PreProcessed", "26.06.2020_131415indices.csv"))
+  write.csv(df, getDataPath("SERF_AI_PreProcessed", "20.07.2020_151617indices.csv"))
   
 
 df <- separate(df, col = date, into = c("year", "monthday"), by = ,4, remove = F) %>% 
 separate(., col = monthday, into = c("month", "day"), by = ,2, remove = T)
-write.csv(df, getDataPath("SERF_AI_PreProcessed", "26.06.2020_131415indices.csv"))
+write.csv(df, getDataPath("SERF_AI_PreProcessed", "20.07.2020_151617indices.csv"))
 
 rm(files)
