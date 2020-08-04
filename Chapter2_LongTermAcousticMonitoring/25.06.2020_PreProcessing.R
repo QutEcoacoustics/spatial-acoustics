@@ -26,7 +26,7 @@ df <- separate(df, col = FileName, into = c("location", "date", "time", "file_id
   write.csv(df, getDataPath("SERF_AI_PreProcessed", "20.07.2020_151617indices.csv"))
   
 
-df <- separate(df, col = date, into = c("year", "monthday"), by = ,4, remove = F) %>% 
+df <- separate(df, col = date, into = c("year", "monthday"), by = 4, remove = F) %>% 
 separate(., col = monthday, into = c("month", "day"), by = ,2, remove = T)
 write.csv(df, getDataPath("SERF_AI_PreProcessed", "20.07.2020_151617indices.csv"))
 
