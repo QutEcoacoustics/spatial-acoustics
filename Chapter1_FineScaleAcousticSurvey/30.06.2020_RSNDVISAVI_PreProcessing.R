@@ -34,9 +34,9 @@ write.csv(df_filter, getDataPath("13.07.2020_dataSAVINDVI.csv"))
 
 df_filter1 <- select(df_filter, ID, everything())
 df_filter1 <-  df_filter1 %>% mutate_at(vars(2:13), scale)
-summary(df_filter1[2:13])
+summary(df_filter1[,2:13])
 
-correlation <- cor(df_filter1[2:13])
+correlation <- cor(df_filter1[,2:13])
 write.csv(correlation, getDataPath("13.07.2020_cormatrix.csv"))
 df_filter2 <- select(df_filter1, -c(SAVI_AVG, CanopyHeight))
 write.csv(df_filter2, getDataPath("13.07.2020_newmodelvars.csv"))
