@@ -19,7 +19,7 @@ spatialdf <- SpatialPointsDataFrame(coords = LatLong, data = df, proj4string = C
 dist_matrix <- gw.dist(dp.locat = coordinates(spatialdf), p = 2)
 
 #Setting the dependent variable#
-DeVar <- "ClusterCount"
+DeVar <- "Ndsi"
 
 #Setting indepentendent variables
 IndVar <- c("CanopyCover", "SubcanopyHeight", "Slope", "Aspect", "Elevation", "AVERAGE_NT_DIST", "AVERAGE_NS_DIST", "AVERAGE_GC_NG", "AVERAGE_GC_NF", "AVERAGE_GC_SH", "NDVI_AVERAGE")
@@ -27,7 +27,7 @@ IndVar <- c("CanopyCover", "SubcanopyHeight", "Slope", "Aspect", "Elevation", "A
 lm.global <- lm(DeVar ~ IndVar, data = df)
 
 
-lm.global <- lm(ClusterCount ~ CanopyCover + SubcanopyHeight + Slope + Elevation + Aspect + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE, data = df)
+lm.global <- lm(Ndsi ~ CanopyCover + SubcanopyHeight + Slope + Elevation + Aspect + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE, data = df)
 
 summary(lm.global)
 
@@ -36,7 +36,7 @@ summary(lm.global)
 library(lmtest)
 
 
-lm.bp <- bptest(ClusterCount ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE, data = spatialdf, studentize = T)
+lm.bp <- bptest(Ndsi ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE, data = spatialdf, studentize = T)
 
 lm.bp
 
@@ -45,7 +45,7 @@ lm.bp
 
 #Global Model#
 #Selecting bandwidth#
-BD_sel <- bw.gwr(ClusterCount ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE, data = spatialdf, approach = "AIC", kernel = "tricube", adaptive = F, dMat = dist_matrix)
+BD_sel <- bw.gwr(Ndsi ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE, data = spatialdf, approach = "AIC", kernel = "tricube", adaptive = F, dMat = dist_matrix)
 
 model_selection <- model.selection.gwr(DeVar, IndVar, data = spatialdf, bw = BD_sel, approach = "AIC", adaptive = F, kernel = "tricube", dMat = dist_matrix)
 
@@ -59,7 +59,7 @@ GWR_model_selection <- plot(sorted_models[[2]][,2], col = "black", pch = 20, lty
 
 #COmplete Model - seems to be the lower AIC value#
 
-gwr.res <- gwr.basic(ClusterCount ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE, data = spatialdf,  bw = BD_sel, adaptive = F, kernel = "tricube")
+gwr.res <- gwr.basic(Ndsi ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE, data = spatialdf,  bw = BD_sel, adaptive = F, kernel = "tricube")
 summary(gwr.res$lm)
 
 model <- as.data.frame(gwr.res$SDF)
@@ -74,8 +74,8 @@ ggplot(model, aes(x = as.factor(coords.x2), y = Local_R2)) +
   geom_col(position = "dodge") +
   theme_classic() +
   theme(panel.border = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") +
-  labs(title = "Local R2 values per point - Global and and ClusterCount", x = "Point", y = "Local R2", fill = "Day period") +
-ggsave(getDataPath("Figures", "27.07.2020_gwrr2valuespersite_globalmodel_ClusterCount.tiff"))
+  labs(title = "Local R2 values per point - Global and and Ndsi", x = "Point", y = "Local R2", fill = "Day period") +
+ggsave(getDataPath("Figures", "27.07.2020_gwrr2valuespersite_globalmodel_Ndsi.tiff"))
 
 df_gather <- gather(model_grouped[,1:14], -c(coords.x1, coords.x2), key = "coefficient_name", value = "coefficient_value")
 
@@ -84,22 +84,22 @@ ggplot(df_gather, aes(x = as.factor(coords.x2), y = coefficient_value, fill = co
   theme_classic() +
   scale_fill_manual(values = c("#7f3b08", "#b35806", "#e08214", "#fdb863", "#fee0b6", "#f7f7f7", "#d8daeb", "#b2abd2", "#8073ac", "#542788", "#2d004b", "#40004b")) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-  labs(title = "Coefficients per point - Global model and ClusterCount", x = "Point", y = "Coefficients Value", fill = "Variables") +
-  ggsave(getDataPath("Figures", "27.07.2020_Coefficients_globalmodel_ClusterCount.tiff"))
+  labs(title = "Coefficients per point - Global model and Ndsi", x = "Point", y = "Coefficients Value", fill = "Variables") +
+  ggsave(getDataPath("Figures", "27.07.2020_Coefficients_globalmodel_Ndsi.tiff"))
 
 
 #Global model with temperature and time#
-BD_sel <- bw.gwr(ClusterCount ~ temperature, data = spatialdf, approach = "AIC", kernel = "tricube", adaptive = F, dMat = dist_matrix)
+BD_sel <- bw.gwr(Ndsi ~ temperature, data = spatialdf, approach = "AIC", kernel = "tricube", adaptive = F, dMat = dist_matrix)
 
-model_selection <- model.selection.gwr(DeVar =  "ClusterCount", InDeVars = c("temperature"), data = spatialdf, bw = BD_sel, approach = "AIC", adaptive = F, kernel = "tricube", dMat = dist_matrix)
+model_selection <- model.selection.gwr(DeVar =  "Ndsi", InDeVars = c("temperature"), data = spatialdf, bw = BD_sel, approach = "AIC", adaptive = F, kernel = "tricube", dMat = dist_matrix)
 
 model_list <- model.sort.gwr(model_selection, numVars = 1, ruler.vector = model_selection[[2]][,2])
 
-model_view <- model.view.gwr(DeVar =  "ClusterCount", InDeVars = c("temperature", "beginning_rec_modified"), model.list = model_list)
+model_view <- model.view.gwr(DeVar =  "Ndsi", InDeVars = c("temperature", "beginning_rec_modified"), model.list = model_list)
 
 GWR_model_selection <- plot(model.list[[2]][,2], col = "black", pch = 20, lty = 5, main = "Alternative view of GWR model selection procedure", ylab = "AICc", xlab = "Model number", type = "b")
 
-gwr.res <- gwr.basic(ClusterCount ~ temperature, data = spatialdf,  bw = BD_sel, adaptive = F, kernel = "tricube")
+gwr.res <- gwr.basic(Ndsi ~ temperature, data = spatialdf,  bw = BD_sel, adaptive = F, kernel = "tricube")
 summary(gwr.res$lm)
 
 model <- as.data.frame(gwr.res$SDF)
@@ -110,8 +110,8 @@ ggplot(model, aes(x = as.factor(coords.x2), y = Local_R2)) +
   geom_col(position = "dodge") +
   theme_classic() +
   theme(panel.border = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") +
-  labs(title = "Local R2 values per point - Temperature and ClusterCount", x = "Point", y = "Local R2") +
-  ggsave(getDataPath("Figures", "27.07.2020_gwrr2valuespersite_temptimemodel_ClusterCount.tiff"))
+  labs(title = "Local R2 values per point - Temperature and Ndsi", x = "Point", y = "Local R2") +
+  ggsave(getDataPath("Figures", "27.07.2020_gwrr2valuespersite_temptimemodel_Ndsi.tiff"))
 
 model_grouped <- group_by(model, "coords.X2" = signif(coords.x2, digits = 7)) %>% 
   summarise_all(., mean)
@@ -122,7 +122,7 @@ ggplot(model_grouped, aes(x = as.factor(coords.x2), y = temperature)) +
   theme_classic() +
   scale_fill_manual(values = c("#7f3b08", "#b35806")) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-  labs(title = "Temperature coefficients per point - ClusterCount", x = "Point", y = "Coefficients Value", fill = "Variables") +
-  ggsave(getDataPath("Figures", "27.07.2020_gwrtempcoefficients_ClusterCount.tiff"))
+  labs(title = "Temperature coefficients per point - Ndsi", x = "Point", y = "Coefficients Value", fill = "Variables") +
+  ggsave(getDataPath("Figures", "27.07.2020_gwrtempcoefficients_Ndsi.tiff"))
 
 
