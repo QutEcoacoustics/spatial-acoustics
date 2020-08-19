@@ -8,7 +8,8 @@ getDataPath <- function (...) {
   
 }
 
-df <- read.csv(getDataPath("16.07.2020_modelvars_complete.csv"))
+df <- read.csv(getDataPath("23.07.2020_scaledvars_complete.csv"))
+summary(df)
 
 #creating spatial df#
 #Morning#
@@ -21,12 +22,12 @@ dist_matrix <- gw.dist(dp.locat = coordinates(spatialdf), p = 2)
 DeVar <- "AcousticComplexity"
 
 #Setting indepentendent variables
-IndVar <- "CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE + temperature"
+IndVar <- c("CanopyCover", "SubcanopyHeight", "Slope", "Aspect", "Elevation", "AVERAGE_NT_DIST", "AVERAGE_NS_DIST", "AVERAGE_GC_NG", "AVERAGE_GC_NF", "AVERAGE_GC_SH", "NDVI_AVERAGE", "temperature")
 
 lm.global <- lm(DeVar ~ IndVar, data = df)
 
 
-lm.global <- lm(AcousticComplexity ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE + temperature, data = df)
+lm.global <- lm(AcousticComplexity ~ CanopyCover + SubcanopyHeight + Slope + Elevation + Aspect + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE + temperature, data = df)
 
 summary(lm.global)
 
@@ -37,6 +38,8 @@ library(lmtest)
 
 lm.bp <- bptest(AcousticComplexity ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE + temperature, data = spatialdf, studentize = T)
 
+lm.bp
+
 
 #Assess stationarity. The Koenker (BP) Statistic (Koenker's studentized Bruesch-Pagan statistic) is a test to determine whether the explanatory variables in the model have a consistent relationship to the dependent variable both in geographic space and in data space. When the model is consistent in geographic space, the spatial processes represented by the explanatory variables behave the same everywhere in the study area (the processes are stationary). When the model is consistent in data space, the variation in the relationship between predicted values and each explanatory variable does not change with changes in explanatory variable magnitudes (there is no heteroscedasticity in the model). Suppose you want to predict crime, and one of your explanatory variables is income. The model would have problematic heteroscedasticity if the predictions were more accurate for locations with small median incomes than they were for locations with large median incomes. The null hypothesis for this test is that the model is stationary. For a 95 percent confidence level, a p-value (probability) smaller than 0.05 indicates statistically significant heteroscedasticity and/or nonstationarity. When results from this test are statistically significant, consult the robust coefficient standard errors and probabilities to assess the effectiveness of each explanatory variable. Regression models with statistically significant nonstationarity are often good candidates for Geographically Weighted Regression (GWR) analysis.#
 
@@ -44,32 +47,52 @@ lm.bp <- bptest(AcousticComplexity ~ CanopyCover + SubcanopyHeight + Slope + Asp
 #Selecting bandwidth#
 BD_sel <- bw.gwr(AcousticComplexity ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE + temperature, data = spatialdf, approach = "AIC", kernel = "gaussian", adaptive = F, dMat = dist_matrix)
 
-model_selection <- model.selection.gwr(DeVar =  "AcousticComplexity", InDeVars = c("CanopyCover", "SubcanopyHeight", "Slope", "Aspect", "Elevation", "AVERAGE_NT_DIST", "AVERAGE_NS_DIST", "AVERAGE_GC_NG", "AVERAGE_GC_NF", "AVERAGE_GC_SH", "NDVI_AVERAGE", "temperature"), data = spatialdf, bw = BD_sel, approach = "AIC", adaptive = F, kernel = "gaussian", dMat = dist_matrix)
+model_selection <- model.selection.gwr(DeVar, IndVar, data = spatialdf, bw = BD_sel, approach = "AIC", adaptive = F, kernel = "gaussian", dMat = dist_matrix)
 
-model_view <- model.view.gwr(DeVar =  "AcousticComplexity", InDeVars = c("CanopyCover", "SubcanopyHeight", "Slope", "Aspect", "Elevation", "AVERAGE_NT_DIST", "AVERAGE_NS_DIST", "AVERAGE_GC_NG", "AVERAGE_GC_NF", "AVERAGE_GC_SH", "NDVI_AVERAGE", "temperature"), model.list = model_list)
+sorted_models <- model.sort.gwr(model_selection, numVars = length(IndVar), ruler.vector = model_selection[[2]][,2])
 
-model.list <- model.sort.gwr(model_selection, numVars = 11, ruler.vector = model_selection[[2]][,2])
+model_list <- sorted_models[[1]]
 
-GWR_model_selection <- plot(model.list[[2]][,2], col = "black", pch = 20, lty = 5, main = "Alternative view of GWR model selection procedure", ylab = "AICc", xlab = "Model number", type = "b")
+model_view <- model.view.gwr(DeVar, IndVar, model.list = model_list)
+
+GWR_model_selection <- plot(sorted_models[[2]][,2], col = "black", pch = 20, lty = 5, main = "Alternative view of GWR model selection procedure", ylab = "AICc", xlab = "Model number", type = "b")
 
 #COmplete Model - seems to be the lower AIC value#
 
-gwr.res <- gwr.basic(AcousticComplexity ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE, temperature, data = spatialdf,  bw = BD_sel, adaptive = F)
+gwr.res <- gwr.basic(AcousticComplexity ~ CanopyCover + SubcanopyHeight + Slope + Aspect + Elevation + AVERAGE_NT_DIST + AVERAGE_NS_DIST + AVERAGE_GC_NG + AVERAGE_GC_NF + AVERAGE_GC_SH + NDVI_AVERAGE + temperature, data = spatialdf,  bw = BD_sel, adaptive = F)
 summary(gwr.res$lm)
 
 model <- as.data.frame(gwr.res$SDF)
 
-model$time_4groups <- model$time_4groups[order(model$Local_R2)]
+
+model_grouped <- group_by(model, "coords.X2" = signif(coords.x2, digits = 7)) %>% 
+  summarise_all(., mean)
+
+
 
 #Local r2 per point
-ggplot(model, aes(x = as.factor(coords.x2), y = as.numeric(Local_R2))) +
+ggplot(model, aes(x = as.factor(coords.x2), y = temperature)) +
   geom_col(position = "dodge") +
   theme_classic() +
   theme(panel.border = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") +
-  labs(title = "Local R2 values per point", x = "Point", y = "Local R2", fill = "Day period") +
-  scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd")), labels = c("Afternoon", "Evening", "Morning", "Night")) +
-  facet_wrap(~ time_4groups) #+
+  labs(title = "Local R2 values per point", x = "Point", y = "Local R2", fill = "Day period") #+
+  #scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd")), labels = c("Afternoon", "Evening", "Morning", "Night")) +
+  #facet_wrap(~ time_4groups) #+
 #ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_gwrr2valuespersite_separatetime.tiff"))
+
+coefficients_df <- gather(model_grouped, -c(coords.x1, coords.x2), key = "coefficient_name", value = "coeffiecient_value")
+
+
+coefficients <- filter(coefficients_df, coefficient_name == "CanopyCover"  | coefficient_name == "SubcanopyHeight" | coefficient_name == "Slope" | coefficient_name == "Aspect" | coefficient_name == "Elevation" | coefficient_name == "AVERAGE_NT_DIST" | coefficient_name == "AVERAGE_NS_DIST" | coefficient_name == "AVERAGE_GC_NG" | coefficient_name == "AVERAGE_GC_NF" | coefficient_name == "AVERAGE_GC_SH" | coefficient_name == "NDVI_AVERAGE" | coefficient_name == "temperature" | coefficient_name == "Local_R2" | coefficient_name == "y")
+
+model %>% filter(coefficient_name == "SubcanopyHeight") %>% 
+  ggplot(model, aes(x = as.factor(signif(coords.x2, digits = 7)), y = SubcanopyHeight)) +
+  geom_jitter() +
+  theme_classic() +
+  scale_fill_manual(values = c("#7f3b08", "#b35806", "#e08214", "#fdb863", "#fee0b6", "#f7f7f7", "#d8daeb", "#b2abd2", "#8073ac", "#542788", "#2d004b", "#40004b")) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  labs(title = "Night coefficients per point", x = "Point", y = "Coefficients Value", fill = "Variables") #+
+  #ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "05.05.2020_NightCoefficientsperpoint.tiff"))
 
 
 #Separating explanatory variables - 1st: canopy and subcanopy variables#
@@ -99,6 +122,26 @@ ggplot(model, aes(x = as.factor(coords.x2), y = as.numeric(Local_R2))) +
   scale_fill_manual(values = c("#fb8072", "#80b1d3", "#ffffb3", "#bc80bd")), labels = c("Afternoon", "Evening", "Morning", "Night")) +
   facet_wrap(~ time_4groups) #+
 #ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "Figures", "15.04.2020_gwrr2valuespersite_separatetime.tiff"))
+
+coefficients_df <- gather(model, -c(coords.x1, coords.x2), key = "coefficient_name", value = "coeffiecient_value")
+unique(coefficients_df$coefficient_name)
+
+coefficients <- filter(coefficients_df, coefficient_name == "CanopyCover"  | coefficient_name == "CanopyHeight" | coefficient_name == "SubcanopyHeight" | coefficient_name == "Slope" | coefficient_name == "Aspect" | coefficient_name == "Elevation" | coefficient_name == "AVERAGE_NT_DIST" | coefficient_name == "AVERAGE_NS_DIST" | coefficient_name == "AVERAGE_GC_NG" | coefficient_name == "AVERAGE_GC_NF" | coefficient_name == "AVERAGE_GC_SH" | coefficient_name == "y" | coefficient_name == "Local_R2")
+
+
+coefficients %>% filter(coefficient_name != "y") %>% 
+  ggplot(., aes(x = as.factor(coords.x2), y = coeffiecient_value)) +
+  geom_col() +
+  theme_classic() +
+  theme(panel.border = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  labs(title = "Afternoon Y variation per point", x = "Point", y = "Coefficients") #+
+  #ggsave(getDataPath("Chapter1_FineScaleAcousticSurvey", "14.04.2020_gwrYvaluespersite_afternoon.tiff"))
+
+coefficients %>% filter(coefficient_name != "y") %>% 
+  ggplot(., aes(x = coords.x2, y = coeffiecient_value, colour = coefficient_name)) +
+  geom_point() #+
+#facet_wrap(~ time_4groups)
+
 
 #Aspect, slope and elevation model#
 #Selecting bandwidth#
