@@ -19,7 +19,7 @@ spatialdf <- SpatialPointsDataFrame(coords = LatLong, data = df, proj4string = C
 dist_matrix <- gw.dist(dp.locat = coordinates(spatialdf), p = 2)
 
 #Setting the dependent variable#
-DeVar <- "ClusterCount"
+DeVar <- "Ndsi"
 
 #Setting indepentendent variables
 IndVar <- c("Elevation", "Slope", "Aspect")
@@ -27,7 +27,7 @@ IndVar <- c("Elevation", "Slope", "Aspect")
 lm.global <- lm(DeVar ~ IndVar, data = df)
 
 
-lm.global <- lm(ClusterCount ~ Slope + Elevation + Aspect, data = df)
+lm.global <- lm(Ndsi ~ Slope + Elevation + Aspect, data = df)
 
 summary(lm.global)
 
@@ -36,7 +36,7 @@ summary(lm.global)
 library(lmtest)
 
 
-lm.bp <- bptest(ClusterCount ~ Slope + Elevation + Aspect, data = spatialdf, studentize = T)
+lm.bp <- bptest(Ndsi ~ Slope + Elevation + Aspect, data = spatialdf, studentize = T)
 
 lm.bp
 
@@ -45,7 +45,7 @@ lm.bp
 
 #Global Model#
 #Selecting bandwidth#
-BD_sel <- bw.gwr(ClusterCount ~ Elevation + Aspect + Slope, data = spatialdf, approach = "AIC", kernel = "tricube", adaptive = F, dMat = dist_matrix)
+BD_sel <- bw.gwr(Ndsi ~ Elevation + Aspect + Slope, data = spatialdf, approach = "AIC", kernel = "tricube", adaptive = F, dMat = dist_matrix)
 
 model_selection <- model.selection.gwr(DeVar, IndVar, data = spatialdf, bw = BD_sel, approach = "AIC", adaptive = F, kernel = "tricube", dMat = dist_matrix)
 
@@ -59,7 +59,7 @@ GWR_model_selection <- plot(sorted_models[[2]][,2], col = "black", pch = 20, lty
 
 #COmplete Model - seems to be the lower AIC value#
 
-gwr.res <- gwr.basic(ClusterCount ~ Elevation + Slope + Aspect, data = spatialdf,  bw = BD_sel, adaptive = F, kernel = "tricube")
+gwr.res <- gwr.basic(Ndsi ~ Elevation + Slope + Aspect, data = spatialdf,  bw = BD_sel, adaptive = F, kernel = "tricube")
 summary(gwr.res$lm)
 
 model <- as.data.frame(gwr.res$SDF)
@@ -73,15 +73,15 @@ ggplot(model, aes(x = as.factor(coords.x2), y = Local_R2)) +
   geom_col(position = "dodge") +
   theme_classic() +
   theme(panel.border = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") +
-  labs(title = "Local R2 values per point - Topography and ClusterCount", x = "Point", y = "Local R2", fill = "Day period") +
-  ggsave(getDataPath("Figures", "11.08.2020_gwrr2valuespersite_topographymodel_ClusterCount.tiff"))
+  labs(title = "Local R2 values per point - Topography and Ndsi", x = "Point", y = "Local R2", fill = "Day period") +
+  ggsave(getDataPath("Figures", "11.08.2020_gwrr2valuespersite_topographymodel_Ndsi.tiff"))
 
 df_gather <- gather(model_grouped[,1:5], -c(coords.x1, coords.x2), key = "coefficient_name", value = "coefficient_value")
 
-ggplot(model_grouped, aes(x = as.factor(coords.x2), y = Slope)) +
+ggplot(model_grouped, aes(x = as.factor(coords.x2), y = Elevation)) +
   geom_col(position = "dodge") +
   theme_classic() +
   scale_fill_manual(values = c("#7f3b08", "#b35806", "#e08214", "#fdb863", "#fee0b6", "#f7f7f7", "#d8daeb", "#b2abd2", "#8073ac", "#542788", "#2d004b", "#40004b")) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-  labs(title = "Coefficients per point - Topography and ClusterCount model", x = "Point", y = "Coefficients Value", fill = "Variables") +
-  ggsave(getDataPath("Figures", "11.08.2020_Coefficients_Slope_ClusterCount.tiff"))
+  labs(title = "Coefficients per point - Topography and Ndsi model", x = "Point", y = "Coefficients Value", fill = "Variables") +
+  ggsave(getDataPath("Figures", "11.08.2020_Coefficients_Elevation_Ndsi.tiff"))
