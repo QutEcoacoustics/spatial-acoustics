@@ -3,19 +3,35 @@
 library(tidyverse)
 library(ggplot2)
 
-ts <- read.csv("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC/WB06/ACI/18.08.2020_WB06_OCT_ACI.csv")
+ts <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC/WB25/18.08.2020_WB25_OCT.csv") %>% 
+  mutate(point = "WB25")
+  rename(., position = X) %>% 
+  select(., position, AcousticComplexity)
 
-res <- read.csv("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC/WB06/ACI/resACI_wb06_432.csv") %>% 
+res <- read.table("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC/WB15/resBGN_wb15._432.txt")
+
+obs_num <- as.numeric(count(res))
+
+res <- res %>% rename(FirstInstance_Start = V1,
+         FirstInstance_End = V2,
+         SecondInstance_Start = V3,
+         SecondInstance_End = V4,
+         Lenght = V5,
+         Distance = V6) %>% 
+  mutate(., id = 1:obs_num) %>% 
+  select(., id, everything()) %>% 
+  filter(., Distance <= "2.7") %>% 
   pivot_longer(., cols = 2:5, names_to = "Instance", values_to = "position") %>% 
   mutate(., Instance = gsub(pattern = "FirstInstance", replacement = "motif", x = Instance)) %>%
   mutate(., Instance = gsub(pattern = "SecondInstance", replacement = "match", x = Instance)) %>%
   separate(., Instance, into = c("instance", "moment"), sep = "_") %>% 
   mutate(., instance = paste(id, instance, sep = "_")) %>% 
   pivot_wider(., names_from = moment, values_from = position)
+
+ggplot(res, aes(x = Lenght, y = Distance)) +
+      geom_smooth()
   
 df <- full_join(ts, res, by = c("position" = "Start"), keep = T) #%>% #After doing that the motif id (instance) tells when the motif/match starts and the column end tells you where it ends. It duplicates positions if there is more than one motif starting at the same point#
-
-
 
   #select(., -"NA") #%>% 
   #mutate(., instance_id = case_when(Start >= fid  | End <= fid ~ instance,
