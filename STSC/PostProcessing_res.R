@@ -1,26 +1,18 @@
-rm(list=ls())
-
 library(tidyverse)
 library(ggplot2)
+
+rm(list=ls())
 
 getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
 }
 
+point <- "WB56"
+filename_complete_ts <- paste(point, "_OCT.csv", sep = "")
 
-point <- "WB06"
-filename_complete_ts <- "WB06_OCT.csv"
-index <- "BGN"
-cut_threshold <- "2.289616"
-filename_results <- "resBGN_wb06_432.txt"
-
-
-
-#TS Graphs - Checking for overlaps and true positives
-
-complete_ts <- read.csv(getDataPath(Point, filename_complete_ts)) %>% 
+complete_ts <- read.csv(getDataPath(point, filename_complete_ts)) %>% 
   rename(., position = X)
-  
+
 
 #Plotting TS for all indices
 complete_ts %>% select(., 1:8) %>% 
@@ -33,30 +25,46 @@ complete_ts %>% select(., 1:8) %>%
   ggsave(getDataPath(point, "28.08.2020_indicespertime.jpg"))
 
 
-ts <- complete_ts %>% 
+parameters <- read.csv(getDataPath(point, "motif_info.csv"))
+
+obs <- 5
+
+index <- parameters$index_abb[obs]
+index_select <- parameters$index_name[obs]
+cut_threshold <- parameters$threshold[obs]
+filename_results <- parameters$filename[obs]  
+
+#TS Graphs - Checking for overlaps and true positives
+
+
+ts <- complete_ts %>%
   mutate(., point = point) %>% 
-  select(., 1:2, 9:18) %>% 
+  select(., 1, all_of(index_select), 9:18) %>% 
   mutate(., motif = NA) %>% 
   mutate(., distance = NA) %>% 
   mutate(., length = NA) %>% 
-  mutate(., reference = "ts") %>% 
-  mutate(., id = 0)
+  mutate(., reference = "0_ts") %>% 
+  mutate(., id = 0) %>% 
+  rename(., Index = index_select)
 
-res <- read.table(getDataPath(point, index, filename_results)) %>%
-                          rename(., FirstInstance_Start = V1,
+res <- read.table(getDataPath(point, index, filename_results))
+
+res <- rename(res, FirstInstance_Start = V1,
                                   FirstInstance_End = V2,
                                   SecondInstance_Start = V3,
                                   SecondInstance_End = V4,
                                   Length = V5,
                                   Distance = V6) %>%
-                          mutate(., id = 1:as.numeric(count(res))) %>%
-                          filter(., Distance <= cut_threshold) %>% 
-                          select(., id, everything()) %>% 
-                          pivot_longer(., cols = 2:5, names_to = "Instance", values_to = "position") %>% 
-                          mutate(., Instance = gsub(pattern = "FirstInstance", replacement = "motif", x = Instance)) %>%
-                          mutate(., Instance = gsub(pattern = "SecondInstance", replacement = "match", x = Instance)) %>%
-                          separate(., Instance, into = c("instance", "moment"), sep = "_") %>% 
-                          pivot_wider(., names_from = moment, values_from = position)
+  mutate(., id = 1:as.numeric(count(res))) %>% 
+  filter(., Distance <= cut_threshold) %>% 
+  select(., id, everything()) %>% 
+  pivot_longer(., cols = 2:5, names_to = "Instance", values_to = "position") %>% 
+  mutate(., Instance = gsub(pattern = "FirstInstance", replacement = "motif", x = Instance)) %>%
+  mutate(., Instance = gsub(pattern = "SecondInstance", replacement = "match", x = Instance)) %>%
+  separate(., Instance, into = c("instance", "moment"), sep = "_") %>% 
+  pivot_wider(., names_from = moment, values_from = position)
+
+
 #Motif results                         
   
 res_motif <- filter(res, instance == "motif") %>% 
@@ -80,26 +88,31 @@ for (row in 1:nrow(ts)) {
 ts[res_motif$Start[row]:res_motif$End[row], c("motif", "distance", "length")] <- res_motif[row, c("instance", "Distance", "Length")]
 }
 
+write.csv(ts, getDataPath(point, index, paste(point, index, "motif.csv", sep = "_")))
+
 #Preparing for the plot
-plot_ts <- select(ts, reference, position, AcousticComplexity, id)
-plot_motif <- select(ts, motif, position, AcousticComplexity, id) %>% 
+plot_ts <- select(ts, reference, position, Index)
+
+plot_motif <- select(ts, motif, position, Index) %>% 
   rename(., reference = motif) %>% 
   filter(reference != "NA")
-plot_df <- rbind(plot_ts, plot_motif)
+  
+plot_df_motif <- rbind(plot_ts, plot_motif) %>% 
+  separate(., reference, into = c("number", "what"), remove = F)
 
-rm(plot_ts, plot_motif)
+# , 
 
-colours <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#35978f", "#1a1a1a")
-linetype <- c("solid", "solid", "solid", "solid", "solid", "solid", "solid", "solid", "solid", "solid", "solid", "dotted")
+colours <- c("#1a1a1a", "#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#35978f", "#ff7f00", "#cab2d6", "#6a3d9a")
+linetype <- c("solid", "dotted")
 
-ggplot(plot_df, aes(x = position, y = AcousticComplexity)) +
-  geom_line(aes(colour = reference, linetype = reference)) +
+ggplot(plot_df_motif, aes(x = position, y = Index)) +
+  geom_line(aes(colour = number, linetype = what)) +
   scale_colour_manual(values =  colours) +
   scale_linetype_manual(values = linetype) +
   theme_classic() +
   theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank()) +
+  labs(y = index_select) +
   ggsave(getDataPath(point, index, "Figures", "28.08.2020_Motifs.jpg"))
-
 
 #Match results
 
@@ -124,27 +137,44 @@ for (row in 1:nrow(ts)) {
   ts[res_match$Start[row]:res_match$End[row], c("match", "distance", "length")] <- res_match[row, c("instance", "Distance", "Length")]
 }
 
+write.csv(ts, getDataPath(point, index, paste(point, index, "match.csv", sep = "_")))
+
 #Preparing for the plot
-plot_ts <- select(ts, reference, position, AcousticComplexity, id)
-plot_match <- select(ts, match, position, AcousticComplexity, id) %>% 
+plot_match <- select(ts, match, position, Index) %>% 
   rename(., reference = match) %>% 
-  filter(reference != "NA")
-plot_df <- rbind(plot_ts, plot_match)
+  filter(., reference != "NA")
+  
+plot_df_match <- rbind(plot_ts, plot_match) %>% 
+  separate(., reference, into = c("number", "what"), remove = F)
 
-rm(plot_ts, plot_match)
+rm(plot_ts)
 
-#"#a6cee3", "#1f78b4"
 
-colours <- c("#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#35978f", "#1a1a1a")
-linetype <- c("solid", "solid", "solid", "solid", "solid", "solid", "solid", "solid", "solid", "dotted")
+#"#a6cee3", "#1f78b4" "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a",
 
-ggplot(plot_df, aes(x = position, y = AcousticComplexity)) +
-  geom_line(aes(colour = reference, linetype = reference)) +
+ggplot(plot_df_match, aes(x = position, y = Index)) +
+  geom_line(aes(colour = number, linetype = what)) +
   scale_colour_manual(values =  colours) +
   scale_linetype_manual(values = linetype) +
   theme_classic() +
   theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank()) +
+  labs(y = index_select) +
   ggsave(getDataPath(point, index, "Figures", "28.08.2020_matches.jpg"))
 
 
+#Plotting the motifs and matches
+match_motif_df <- rbind(plot_df_match, plot_df_motif) %>% 
+  filter(., reference != "0_ts") %>% 
+  group_by(., number, what) %>% 
+  mutate(., id = order(order(position))) %>% 
+  ungroup(.)
 
+ggplot(match_motif_df, aes(x = id, y = Index)) +
+  geom_line(aes(linetype = what)) +
+  scale_colour_manual(values =  colours) +
+  scale_linetype_manual(values = linetype) +
+  theme_classic() +
+  theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank()) +
+  labs(y = index_select) +
+  facet_wrap(. ~ number) +
+  ggsave(getDataPath(point, index, "Figures", "28.08.2020_matches_motifs.jpg"))
