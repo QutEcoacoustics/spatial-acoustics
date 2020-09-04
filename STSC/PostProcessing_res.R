@@ -7,8 +7,9 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
 }
 
-point <- "WB56"
-filename_complete_ts <- paste(point, "_OCT.csv", sep = "")
+point <- "SERF"
+batch <- "201503_"
+filename_complete_ts <- paste(batch, point, ".csv", sep = "")
 
 complete_ts <- read.csv(getDataPath(point, filename_complete_ts)) %>% 
   rename(., position = X)
@@ -22,24 +23,24 @@ complete_ts %>% select(., 1:8) %>%
   facet_wrap(. ~ index) +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
-  ggsave(getDataPath(point, "28.08.2020_indicespertime.jpg"))
+  ggsave(getDataPath(point, "04.09.2020_indicespertime.jpg"))
 
 
 parameters <- read.csv(getDataPath(point, "motif_info.csv"))
 
 obs <- 5
 
-index <- parameters$index_abb[obs]
-index_select <- parameters$index_name[obs]
-cut_threshold <- parameters$threshold[obs]
-filename_results <- parameters$filename[obs]  
+index <- "ACI"
+index_select <- "AcousticComplexity"
+cut_threshold <- 2.698956
+filename_results <- "resACI_SERF_430.txt"  
 
 #TS Graphs - Checking for overlaps and true positives
 
 
 ts <- complete_ts %>%
   mutate(., point = point) %>% 
-  select(., 1, all_of(index_select), 9:18) %>% 
+  select(., 1, all_of(index_select), 12:14) %>% 
   mutate(., motif = NA) %>% 
   mutate(., distance = NA) %>% 
   mutate(., length = NA) %>% 
@@ -47,7 +48,7 @@ ts <- complete_ts %>%
   mutate(., id = 0) %>% 
   rename(., Index = index_select)
 
-res <- read.table(getDataPath(point, index, filename_results))
+res <- read.table(getDataPath("resACI_SERF_430.txt"))
 
 res <- rename(res, FirstInstance_Start = V1,
                                   FirstInstance_End = V2,
@@ -88,7 +89,7 @@ for (row in 1:nrow(ts)) {
 ts[res_motif$Start[row]:res_motif$End[row], c("motif", "distance", "length")] <- res_motif[row, c("instance", "Distance", "Length")]
 }
 
-write.csv(ts, getDataPath(point, index, paste(point, index, "motif.csv", sep = "_")))
+write.csv(ts, getDataPath(point, paste(point, index, "motif.csv", sep = "_")))
 
 #Preparing for the plot
 plot_ts <- select(ts, reference, position, Index)
@@ -107,12 +108,12 @@ linetype <- c("solid", "dotted")
 
 ggplot(plot_df_motif, aes(x = position, y = Index)) +
   geom_line(aes(colour = number, linetype = what)) +
-  scale_colour_manual(values =  colours) +
+  #scale_colour_manual(values =  colours) +
   scale_linetype_manual(values = linetype) +
   theme_classic() +
-  theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), legend.position = "none") +
   labs(y = index_select) +
-  ggsave(getDataPath(point, index, "Figures", "28.08.2020_Motifs.jpg"))
+  ggsave(getDataPath(point, paste(index, "Motifs.jpg"), sep = ""))
 
 #Match results
 
@@ -137,7 +138,7 @@ for (row in 1:nrow(ts)) {
   ts[res_match$Start[row]:res_match$End[row], c("match", "distance", "length")] <- res_match[row, c("instance", "Distance", "Length")]
 }
 
-write.csv(ts, getDataPath(point, index, paste(point, index, "match.csv", sep = "_")))
+write.csv(ts, getDataPath(point, paste(point, index, "match.csv", sep = "_")))
 
 #Preparing for the plot
 plot_match <- select(ts, match, position, Index) %>% 
@@ -154,12 +155,12 @@ rm(plot_ts)
 
 ggplot(plot_df_match, aes(x = position, y = Index)) +
   geom_line(aes(colour = number, linetype = what)) +
-  scale_colour_manual(values =  colours) +
+  #scale_colour_manual(values =  colours) +
   scale_linetype_manual(values = linetype) +
   theme_classic() +
-  theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), legend.position = "none") +
   labs(y = index_select) +
-  ggsave(getDataPath(point, index, "Figures", "28.08.2020_matches.jpg"))
+  ggsave(getDataPath(point, paste(index, "matches.jpg"), sep = ""))
 
 
 #Plotting the motifs and matches
@@ -169,12 +170,13 @@ match_motif_df <- rbind(plot_df_match, plot_df_motif) %>%
   mutate(., id = order(order(position))) %>% 
   ungroup(.)
 
+
 ggplot(match_motif_df, aes(x = id, y = Index)) +
   geom_line(aes(linetype = what)) +
   scale_colour_manual(values =  colours) +
   scale_linetype_manual(values = linetype) +
   theme_classic() +
-  theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), legend.position = "none") +
   labs(y = index_select) +
-  facet_wrap(. ~ number) +
-  ggsave(getDataPath(point, index, "Figures", "28.08.2020_matches_motifs.jpg"))
+  facet_wrap(. ~ number, nrow = 4, ncol = 5) +
+  ggsave(getDataPath(point, paste(index, "04.09.2020_matches_motifs.jpg")))
