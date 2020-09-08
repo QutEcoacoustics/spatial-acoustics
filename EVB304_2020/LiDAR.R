@@ -1,14 +1,20 @@
 library(lidR)
 library(raster)
 library(rgdal)
+library(sf)
 
 fzone <- readLAS("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/BatLiDAR/Fzone.las")
 rzone <- readLAS("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/BatLiDAR/Rzone.las")
 dem <- raster("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/GIS/DEM_5m_3857/1DEM_3857.tif")
+serf_boundary <- st_read("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/SERF_Boundary_3857.shp")
 
-plot(dem)
+
 dem <- projectRaster(dem, crs = "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs")
+serf_boundary <- st_set_crs(serf_boundary, )
 
+serf_boundary
+
+print(dem)
 print(fzone)
 print(dem)
 
