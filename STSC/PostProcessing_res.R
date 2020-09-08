@@ -4,7 +4,7 @@ library(ggplot2)
 rm(list=ls())
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
+  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
 }
 
 point <- "SERF"
@@ -106,13 +106,14 @@ plot_df_motif <- rbind(plot_ts, plot_motif) %>%
 colours <- c("#1a1a1a", "#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#35978f", "#ff7f00", "#cab2d6", "#6a3d9a")
 linetype <- c("solid", "dotted")
 
-ggplot(plot_df_motif, aes(x = position, y = Index)) +
+  
+ggplot(test, aes(x = position, y = Index)) +
   geom_line(aes(colour = number, linetype = what)) +
   #scale_colour_manual(values =  colours) +
   scale_linetype_manual(values = linetype) +
   theme_classic() +
-  theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), legend.position = "none") +
-  labs(y = index_select) +
+  theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank()) +
+  labs(y = index_select) #+
   ggsave(getDataPath(point, paste(index, "Motifs.jpg"), sep = ""))
 
 #Match results
