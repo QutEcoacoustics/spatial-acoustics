@@ -2,6 +2,8 @@ library(rucrdtw)
 library(dtwclust)
 library(tidyverse)
 library(ggplot2)
+library(TSclust)
+library(data.table)
 
 rm(list = ls())
 
@@ -16,11 +18,6 @@ match_file <- "WB06_ACI_match.csv"
 
 data <- read.csv(getDataPath(point, index, motif_file))
 match <- read.csv(getDataPath(point, index, match_file))
-
-ts <- filter(data, reference == "0_ts") %>%
-  select()
-  #select(., Index) %>% 
-  #as_vector(.)
 
 motif <- filter(data, motif != is.na(T)) %>% 
   #separate(., motif, into = c("number", "what"), remove = F) %>% 
@@ -39,10 +36,23 @@ match1 <- filter(match, match != is.na(T)) %>%
   #select(., Index) %>% 
   #as_vector(.)
 
-ts_clust <- rbind(motif, match1) 
+df <- rbind(motif, match1)
 
-ts34 <- filter(ts_clust, length == 34) %>% 
-  select(., Index, fid, position) %>% 
-  pivot_wider(., values_from = Index, names_from = position)
+row_names <- unique(df$fid)
 
-cluster <- tsclust(ts_clust, type = "hierarchical", k = c(2, 2, 4, 5, 6))
+ts_clust <- select(df, Index, position, fid) %>%
+  pivot_wider(., names_from = position, values_from  = Index, values_fill = 0) %>%
+  as.matrix(.)
+
+rownames(ts_clust) <- row_names
+
+ts_clust <- ts_clust[,2:264]
+
+write.csv(ts_clust, getDataPath(point, index, "test.csv"))
+
+ts_clust <- read.csv(getDataPath(point, index, "test.csv"), row.names = 1)
+  
+cluster <- tsclust(ts_clust, type = "hierarchical")
+plot(cluster)
+
+
