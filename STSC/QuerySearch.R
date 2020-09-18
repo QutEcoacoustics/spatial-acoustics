@@ -1,9 +1,8 @@
-library(rucrdtw)
 library(dtwclust)
 library(tidyverse)
 library(ggplot2)
 library(TSclust)
-library(data.table)
+library(purrr)
 
 rm(list = ls())
 
@@ -11,48 +10,69 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
 }
 
-point <- "WB06"
-index <- "ACI"
-motif_file <- "WB06_ACI_motif.csv"
-match_file <- "WB06_ACI_match.csv"
 
-data <- read.csv(getDataPath(point, index, motif_file))
-match <- read.csv(getDataPath(point, index, match_file))
+list_matchfiles <- list.files(getDataPath("Results"), pattern = "*_match.csv", recursive = T)
+list_motiffiles <- list.files(getDataPath("Results"), pattern = "*_motif.csv", recursive = T)
 
-motif <- filter(data, motif != is.na(T)) %>% 
-  #separate(., motif, into = c("number", "what"), remove = F) %>% 
-  rename(., fid = motif) #%>% 
-  #select(., Index, fid, position) #%>% 
-  #filter(., number == "113") %>% 
-  #select(., Index) %>% 
-  #as_vector(.)
-
-match1 <- filter(match, match != is.na(T)) %>% 
-  select(., -motif) %>% 
-  #separate(., match, into = c("number", "what"), remove = F) %>% 
-  rename(., fid = match) #%>% 
-  #select(., Index, fid, position) #%>% 
-  #filter(., number == "113") %>% 
-  #select(., Index) %>% 
-  #as_vector(.)
-
-df <- rbind(motif, match1)
-
-row_names <- unique(df$fid)
-
-ts_clust <- select(df, Index, position, fid) %>%
-  pivot_wider(., names_from = position, values_from  = Index, values_fill = 0) %>%
-  as.matrix(.)
-
-rownames(ts_clust) <- row_names
-
-ts_clust <- ts_clust[,2:264]
-
-write.csv(ts_clust, getDataPath(point, index, "test.csv"))
-
-ts_clust <- read.csv(getDataPath(point, index, "test.csv"), row.names = 1)
   
-cluster <- tsclust(ts_clust, type = "hierarchical")
+output_match <- data.frame(id = character(),
+             index_value = numeric(),
+             position = numeric())
+
+for (file in list_matchfiles) {
+    file_result <- read.csv(getDataPath("Results", file)) %>% 
+    filter(., match != is.na(T)) %>% 
+    rename(., fid = match) %>%
+    rename(., index_value = Index) %>% 
+    mutate(., id = paste(basename(file) %>% 
+                           gsub(pattern = "_match.csv", replacement = ""), fid, sep = "_")) %>% 
+    select(., id, index_value, position)
+    output_match <- rbind(output_match, file_result)
+
+}
+
+
+output_motif <- data.frame(id = character(),
+                           index_value = numeric(),
+                           position = numeric())
+
+for (file in list_motiffiles) {
+  file_result <- read.csv(getDataPath("Results", file)) %>% 
+    filter(., motif != is.na(T)) %>% 
+    rename(., fid = motif) %>%
+    rename(., index_value = Index) %>% 
+    mutate(., id = paste(basename(file) %>% 
+                           gsub(pattern = "_motif.csv", replacement = ""), fid, sep = "_")) %>% 
+    select(., id, index_value, position)
+  output_motif <- rbind(output_motif, file_result)
+  
+}
+
+df <- rbind(output_match, output_motif)
+
+ts_clust <- select(df, index_value, id, position) %>%
+  group_by(., id) %>% 
+  mutate(., new_position = order(order(position))) %>% 
+  ungroup(.) %>% 
+  select(., everything(), -position) %>% 
+  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
+  as.data.frame(.)
+
+rownames(ts_clust) <- ts_clust$id
+ts_clust <- ts_clust[,2:length(ts_clust)]
+
+ts_list <- tslist(ts_clust) %>% 
+  map(., na.omit)
+  
+
+
+cluster <- tsclust(ts_list, type = "hierarchical")
 plot(cluster)
 
+D1 <- diss(ts_list, "DTWARP") %>% 
+  as.matrix(D1)
+heatmap(D1)
 
+validity <- cvi(cluster)
+
+shape <- shape_extraction(ts_list)
