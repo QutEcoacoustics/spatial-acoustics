@@ -3,6 +3,7 @@ library(tidyverse)
 library(ggplot2)
 library(TSclust)
 library(purrr)
+library(factoextra)
 
 rm(list = ls())
 
@@ -63,16 +64,26 @@ ts_clust <- ts_clust[,2:length(ts_clust)]
 
 ts_list <- tslist(ts_clust) %>% 
   map(., na.omit)
-  
+
+cluster <- tsclust(ts_list, type = "hierarchical", seed = 123, distance = "dtw", k = 5)
+cvi(cluster, type = "valid")
 
 
-cluster <- tsclust(ts_list, type = "hierarchical")
 plot(cluster)
 
-D1 <- diss(ts_list, "DTWARP") %>% 
-  as.matrix(D1)
-heatmap(D1)
+clustered_data_tidy <- as.data.frame(as.table(cluster@cluster))
+colnames(clustered_data_tidy) <- c("id", "cluster")
+clustered_data_tidy$id <- as.character(clustered_data_tidy$id)
+joined_clusters <- df %>% inner_join(clustered_data_tidy, by = "id") %>% 
+  group_by(., id) %>% 
+  mutate(., new_position = order(order(position))) %>% 
+  ungroup(.)
 
-validity <- cvi(cluster)
 
-shape <- shape_extraction(ts_list)
+ggplot(joined_clusters, aes(x = new_position, y = index_value)) +
+  geom_line(aes(colour = id)) +
+  theme(legend.position = "none") +
+  facet_wrap(.~cluster)
+
+
+
