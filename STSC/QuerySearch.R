@@ -7,7 +7,7 @@ library(purrr)
 rm(list = ls())
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
+  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
 }
 
 
@@ -66,7 +66,7 @@ ts_list <- tslist(ts_clust) %>%
   
 
 
-cluster <- tsclust(ts_list, type = "hierarchical")
+cluster <- tsclust(ts_list, type = "hierarchical", distance = "dtw")
 plot(cluster)
 
 D1 <- diss(ts_list, "DTWARP") %>% 
