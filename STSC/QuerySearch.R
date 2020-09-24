@@ -8,7 +8,7 @@ library(data.table)
 rm(list = ls())
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
+  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
 }
 
 
@@ -85,11 +85,17 @@ ACI <- filter(new_df, index_name == "ACI") %>%
 rownames(ACI) <- ACI$id
 ACI <- ACI[,2:length(ACI)]
 
+<<<<<<< HEAD
 ts_list_ACI <- tslist(ACI) %>% 
   map(., na.omit)
 
 cluster <- tsclust(ts_list_ACI, type = "partitional", seed = 123, distance = "dtw", k = 5)
 cvi(cluster, type = "valid")
+=======
+<<<<<<< HEAD
+cluster <- tsclust(ts_list, type = "hierarchical", distance = "dtw")
+
+>>>>>>> 043339ba75dada1fd51b7030ad589b679d949b63
 plot(cluster)
 print(cluster)
 
