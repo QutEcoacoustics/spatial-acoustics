@@ -3,7 +3,7 @@ library(tidyverse)
 library(ggplot2)
 library(TSclust)
 library(purrr)
-library(factoextra)
+library(data.table)
 
 rm(list = ls())
 
@@ -12,8 +12,8 @@ getDataPath <- function (...) {
 }
 
 
-list_matchfiles <- list.files(getDataPath("Results"), pattern = "*_match.csv", recursive = T)
-list_motiffiles <- list.files(getDataPath("Results"), pattern = "*_motif.csv", recursive = T)
+list_matchfiles <- list.files(getDataPath("Results"), pattern = "*_match_20200922.csv", recursive = T)
+list_motiffiles <- list.files(getDataPath("Results"), pattern = "*_motif_20200922.csv", recursive = T)
 
   
 output_match <- data.frame(id = character(),
@@ -26,7 +26,7 @@ for (file in list_matchfiles) {
     rename(., fid = match) %>%
     rename(., index_value = Index) %>% 
     mutate(., id = paste(basename(file) %>% 
-                           gsub(pattern = "_match.csv", replacement = ""), fid, sep = "_")) %>% 
+                           gsub(pattern = "_match_20200922.csv", replacement = ""), fid, sep = "_")) %>% 
     select(., id, index_value, position)
     output_match <- rbind(output_match, file_result)
 
@@ -43,7 +43,7 @@ for (file in list_motiffiles) {
     rename(., fid = motif) %>%
     rename(., index_value = Index) %>% 
     mutate(., id = paste(basename(file) %>% 
-                           gsub(pattern = "_motif.csv", replacement = ""), fid, sep = "_")) %>% 
+                           gsub(pattern = "_motif_20200922.csv", replacement = ""), fid, sep = "_")) %>% 
     select(., id, index_value, position)
   output_motif <- rbind(output_motif, file_result)
   
@@ -65,25 +65,134 @@ ts_clust <- ts_clust[,2:length(ts_clust)]
 ts_list <- tslist(ts_clust) %>% 
   map(., na.omit)
 
-cluster <- tsclust(ts_list, type = "hierarchical", seed = 123, distance = "dtw", k = 5)
+cluster <- tsclust(ts_list, type = "partitional", seed = 123, distance = "dtw", k = 5)
 cvi(cluster, type = "valid")
-
-
 plot(cluster)
+print(cluster)
 
-clustered_data_tidy <- as.data.frame(as.table(cluster@cluster))
-colnames(clustered_data_tidy) <- c("id", "cluster")
-clustered_data_tidy$id <- as.character(clustered_data_tidy$id)
-joined_clusters <- df %>% inner_join(clustered_data_tidy, by = "id") %>% 
+new_df <- df %>% 
+  separate(., col = id, into = c("point", "index_name", "number", "what"), sep = "_", remove = F)
+
+ACI <- filter(new_df, index_name == "ACI") %>% 
+  select(id, index_value, position) %>% 
   group_by(., id) %>% 
   mutate(., new_position = order(order(position))) %>% 
-  ungroup(.)
+  ungroup(.) %>% 
+  select(., everything(), -position) %>% 
+  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
+  as.data.frame(.)
+
+rownames(ACI) <- ACI$id
+ACI <- ACI[,2:length(ACI)]
+
+ts_list_ACI <- tslist(ACI) %>% 
+  map(., na.omit)
+
+cluster <- tsclust(ts_list_ACI, type = "partitional", seed = 123, distance = "dtw", k = 5)
+cvi(cluster, type = "valid")
+plot(cluster)
+print(cluster)
+
+EVN <- filter(new_df, index_name == "EVN") %>% 
+  select(id, index_value, position)%>% 
+  group_by(., id) %>% 
+  mutate(., new_position = order(order(position))) %>% 
+  ungroup(.) %>% 
+  select(., everything(), -position) %>% 
+  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
+  as.data.frame(.)
+
+rownames(EVN) <- EVN$id
+EVN <- EVN[,2:length(EVN)]
+
+ts_list_EVN <- tslist(EVN) %>% 
+  map(., na.omit)
+
+cluster <- tsclust(ts_list_EVN, type = "partitional", seed = 123, distance = "dtw", k = 5)
+cvi(cluster, type = "valid")
+plot(cluster)
+print(cluster)
+
+ENT <- filter(new_df, index_name == "ENT") %>% 
+  select(id, index_value, position)%>% 
+  group_by(., id) %>% 
+  mutate(., new_position = order(order(position))) %>% 
+  ungroup(.) %>% 
+  select(., everything(), -position) %>% 
+  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
+  as.data.frame(.)
+
+rownames(ENT) <- ENT$id
+ENT <- ENT[,2:length(ENT)]
+
+ts_list_ENT <- tslist(ENT) %>% 
+  map(., na.omit)
+
+cluster <- tsclust(ts_list_ENT, type = "partitional", seed = 123, distance = "dtw", k = 5)
+cvi(cluster, type = "valid")
+plot(cluster)
+print(cluster)
+
+ENT_ACI <- filter(new_df, index_name == "ENT" | index_name == "ACI") %>% 
+  select(id, index_value, position)%>% 
+  group_by(., id) %>% 
+  mutate(., new_position = order(order(position))) %>% 
+  ungroup(.) %>% 
+  select(., everything(), -position) %>% 
+  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
+  as.data.frame(.)
+
+rownames(ENT_ACI) <- ENT_ACI$id
+ENT_ACI <- ENT_ACI[,2:length(ENT_ACI)]
+
+ts_list_ENT_ACI <- tslist(ENT_ACI) %>% 
+  map(., na.omit)
+
+cluster <- tsclust(ts_list_ENT_ACI, type = "partitional", seed = 123, distance = "dtw", k = 5)
+cvi(cluster, type = "valid")
+plot(cluster)
+print(cluster)
 
 
-ggplot(joined_clusters, aes(x = new_position, y = index_value)) +
-  geom_line(aes(colour = id)) +
-  theme(legend.position = "none") +
-  facet_wrap(.~cluster)
+EVN_ACI <- filter(new_df, index_name == "EVN" | index_name == "ACI") %>% 
+  select(id, index_value, position)%>% 
+  group_by(., id) %>% 
+  mutate(., new_position = order(order(position))) %>% 
+  ungroup(.) %>% 
+  select(., everything(), -position) %>% 
+  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
+  as.data.frame(.)
 
+rownames(EVN_ACI) <- EVN_ACI$id
+EVN_ACI <- EVN_ACI[,2:length(EVN_ACI)]
+
+ts_list_EVN_ACI <- tslist(EVN_ACI) %>% 
+  map(., na.omit)
+
+cluster <- tsclust(ts_list_EVN_ACI, type = "partitional", seed = 123, distance = "dtw", k = 5)
+cvi(cluster, type = "valid")
+plot(cluster)
+print(cluster)
+
+
+EVN_ENT <- filter(new_df, index_name == "EVN" | index_name == "ENT") %>% 
+  select(id, index_value, position)%>% 
+  group_by(., id) %>% 
+  mutate(., new_position = order(order(position))) %>% 
+  ungroup(.) %>% 
+  select(., everything(), -position) %>% 
+  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
+  as.data.frame(.)
+
+rownames(EVN_ENT) <- EVN_ENT$id
+EVN_ENT <- EVN_ENT[,2:length(EVN_ENT)]
+
+ts_list_EVN_ENT <- tslist(EVN_ENT) %>% 
+  map(., na.omit)
+
+cluster <- tsclust(ts_list_EVN_ENT, type = "partitional", seed = 123, distance = "dtw", k = 5)
+cvi(cluster, type = "valid")
+plot(cluster)
+print(cluster)
 
 

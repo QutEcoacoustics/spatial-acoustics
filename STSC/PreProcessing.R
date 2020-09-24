@@ -4,14 +4,14 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-df <- read.csv(getDataPath("Chapter2_SoundscapeTemporalAssessment", "SERF_AI_PreProcessed", "21.07.2020_151617FinalIndices.csv"))
+df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"))
 
 
 
 df_order <- df %>% 
-  filter(., year == "2015" & month == "3") %>% 
+  #filter(., year == "2015" & month == "3") %>% 
   with(., .[order(date, time, ResultMinute),]) %>% 
-  select(., AcousticComplexity, BackgroundNoise, HighFreqCover, LowFreqCover, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfCoVSpectrum, EntropyOfPeaksSpectrum, ClusterCount, Ndsi, FileName, date, ResultMinute)
+  select(., AcousticComplexity, EventsPerSecond, TemporalEntropy)
 
 write.csv(df_order, getDataPath("STSC", "SERF", "201503_SERF.csv"))
 
