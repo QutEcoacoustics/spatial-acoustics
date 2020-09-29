@@ -7,13 +7,16 @@ library(data.table)
 
 rm(list = ls())
 
+cluster_method <- "partitional"
+k = 5
+
 getDataPath <- function (...) {
-  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
+  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
 
-list_matchfiles <- list.files(getDataPath("Results"), pattern = "*_match_20200922.csv", recursive = T)
-list_motiffiles <- list.files(getDataPath("Results"), pattern = "*_motif_20200922.csv", recursive = T)
+list_matchfiles <- list.files(getDataPath("STSC", "Results"), pattern = "*_match_20200922.csv", recursive = T)
+list_motiffiles <- list.files(getDataPath("STSC", "Results"), pattern = "*_motif_20200922.csv", recursive = T)
 
   
 output_match <- data.frame(id = character(),
@@ -21,7 +24,7 @@ output_match <- data.frame(id = character(),
              position = numeric())
 
 for (file in list_matchfiles) {
-    file_result <- read.csv(getDataPath("Results", file)) %>% 
+    file_result <- read.csv(getDataPath("STSC", "Results", file)) %>% 
     filter(., match != is.na(T)) %>% 
     rename(., fid = match) %>%
     rename(., index_value = Index) %>% 
@@ -38,7 +41,7 @@ output_motif <- data.frame(id = character(),
                            position = numeric())
 
 for (file in list_motiffiles) {
-  file_result <- read.csv(getDataPath("Results", file)) %>% 
+  file_result <- read.csv(getDataPath("STSC", "Results", file)) %>% 
     filter(., motif != is.na(T)) %>% 
     rename(., fid = motif) %>%
     rename(., index_value = Index) %>% 
@@ -65,140 +68,78 @@ ts_clust <- ts_clust[,2:length(ts_clust)]
 ts_list <- tslist(ts_clust) %>% 
   map(., na.omit)
 
-cluster <- tsclust(ts_list, type = "partitional", seed = 123, distance = "dtw", k = 5)
+cluster <- tsclust(ts_list, type = cluster_method, seed = 123, distance = "dtw", k = k)
 cvi(cluster, type = "valid")
 plot(cluster)
 print(cluster)
 
-new_df <- df %>% 
-  separate(., col = id, into = c("point", "index_name", "number", "what"), sep = "_", remove = F)
+motif_complete <- data.frame(position =	integer(),
+                             index_value = numeric(),
+                             FileName = factor(),
+                             location = character(),
+                             rec = integer(),
+                             point = character(),
+                             date = integer(),
+                             time = integer(),
+                             ResultStartSeconds = integer(),
+                             ResultMinute = integer(),
+                             FID = character(),
+                             distance = numeric(),
+                             length = integer(),
+                             reference = character(),
+                             id	= character(),
+                             fid_what = factor())
 
-ACI <- filter(new_df, index_name == "ACI") %>% 
-  select(id, index_value, position) %>% 
-  group_by(., id) %>% 
-  mutate(., new_position = order(order(position))) %>% 
-  ungroup(.) %>% 
-  select(., everything(), -position) %>% 
-  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
-  as.data.frame(.)
+for (file in list_motiffiles) {
+  file_result <- read.csv(getDataPath("STSC", "Results", file)) %>% 
+    filter(., motif != is.na(T)) %>% 
+    rename(., fid_what = motif) %>%
+    rename(., index_value = Index) %>% 
+    mutate(., id = paste(basename(file) %>% 
+                           gsub(pattern = "_motif_20200922.csv", replacement = ""), fid_what, sep = "_")) %>% 
+    select(., position, index_value, FileName, location, rec, point, date, time, ResultStartSeconds, ResultMinute, FID, distance, length, reference, id, fid_what)
+  motif_complete <- rbind(motif_complete, file_result)
+  
+}
 
-rownames(ACI) <- ACI$id
-ACI <- ACI[,2:length(ACI)]
+match_complete <- data.frame(position =	integer(),
+                             index_value = numeric(),
+                             FileName = factor(),
+                             location = character(),
+                             rec = integer(),
+                             point = character(),
+                             date = integer(),
+                             time = integer(),
+                             ResultStartSeconds = integer(),
+                             ResultMinute = integer(),
+                             FID = character(),
+                             distance = numeric(),
+                             length = integer(),
+                             reference = character(),
+                             id	= character(),
+                             fid_what = factor())
 
-<<<<<<< HEAD
-ts_list_ACI <- tslist(ACI) %>% 
-  map(., na.omit)
-
-cluster <- tsclust(ts_list_ACI, type = "partitional", seed = 123, distance = "dtw", k = 5)
-cvi(cluster, type = "valid")
-=======
-<<<<<<< HEAD
-cluster <- tsclust(ts_list, type = "hierarchical", distance = "dtw")
-
->>>>>>> 043339ba75dada1fd51b7030ad589b679d949b63
-plot(cluster)
-print(cluster)
-
-EVN <- filter(new_df, index_name == "EVN") %>% 
-  select(id, index_value, position)%>% 
-  group_by(., id) %>% 
-  mutate(., new_position = order(order(position))) %>% 
-  ungroup(.) %>% 
-  select(., everything(), -position) %>% 
-  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
-  as.data.frame(.)
-
-rownames(EVN) <- EVN$id
-EVN <- EVN[,2:length(EVN)]
-
-ts_list_EVN <- tslist(EVN) %>% 
-  map(., na.omit)
-
-cluster <- tsclust(ts_list_EVN, type = "partitional", seed = 123, distance = "dtw", k = 5)
-cvi(cluster, type = "valid")
-plot(cluster)
-print(cluster)
-
-ENT <- filter(new_df, index_name == "ENT") %>% 
-  select(id, index_value, position)%>% 
-  group_by(., id) %>% 
-  mutate(., new_position = order(order(position))) %>% 
-  ungroup(.) %>% 
-  select(., everything(), -position) %>% 
-  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
-  as.data.frame(.)
-
-rownames(ENT) <- ENT$id
-ENT <- ENT[,2:length(ENT)]
-
-ts_list_ENT <- tslist(ENT) %>% 
-  map(., na.omit)
-
-cluster <- tsclust(ts_list_ENT, type = "partitional", seed = 123, distance = "dtw", k = 5)
-cvi(cluster, type = "valid")
-plot(cluster)
-print(cluster)
-
-ENT_ACI <- filter(new_df, index_name == "ENT" | index_name == "ACI") %>% 
-  select(id, index_value, position)%>% 
-  group_by(., id) %>% 
-  mutate(., new_position = order(order(position))) %>% 
-  ungroup(.) %>% 
-  select(., everything(), -position) %>% 
-  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
-  as.data.frame(.)
-
-rownames(ENT_ACI) <- ENT_ACI$id
-ENT_ACI <- ENT_ACI[,2:length(ENT_ACI)]
-
-ts_list_ENT_ACI <- tslist(ENT_ACI) %>% 
-  map(., na.omit)
-
-cluster <- tsclust(ts_list_ENT_ACI, type = "partitional", seed = 123, distance = "dtw", k = 5)
-cvi(cluster, type = "valid")
-plot(cluster)
-print(cluster)
+for (file in list_matchfiles) {
+  file_result <- read.csv(getDataPath("STSC", "Results", file)) %>% 
+    filter(., match != is.na(T)) %>% 
+    rename(., fid_what = match) %>%
+    rename(., index_value = Index) %>% 
+    mutate(., id = paste(basename(file) %>% 
+                           gsub(pattern = "_match_20200922.csv", replacement = ""), fid_what, sep = "_")) %>% 
+    select(., position, index_value, FileName, location, rec, point, date, time, ResultStartSeconds, ResultMinute, FID, distance, length, reference, id, fid_what)
+  match_complete <- rbind(match_complete, file_result)
+  
+}
 
 
-EVN_ACI <- filter(new_df, index_name == "EVN" | index_name == "ACI") %>% 
-  select(id, index_value, position)%>% 
-  group_by(., id) %>% 
-  mutate(., new_position = order(order(position))) %>% 
-  ungroup(.) %>% 
-  select(., everything(), -position) %>% 
-  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
-  as.data.frame(.)
+indices <- rbind(match_complete, motif_complete)
 
-rownames(EVN_ACI) <- EVN_ACI$id
-EVN_ACI <- EVN_ACI[,2:length(EVN_ACI)]
+cluster_numbers <- as.data.frame(cbind(cluster@cluster, ts_clust)) %>% 
+  rename("cluster_number" = "cluster@cluster") %>% 
+  select(cluster_number) %>% 
+  rownames_to_column(., "id")
 
-ts_list_EVN_ACI <- tslist(EVN_ACI) %>% 
-  map(., na.omit)
-
-cluster <- tsclust(ts_list_EVN_ACI, type = "partitional", seed = 123, distance = "dtw", k = 5)
-cvi(cluster, type = "valid")
-plot(cluster)
-print(cluster)
-
-
-EVN_ENT <- filter(new_df, index_name == "EVN" | index_name == "ENT") %>% 
-  select(id, index_value, position)%>% 
-  group_by(., id) %>% 
-  mutate(., new_position = order(order(position))) %>% 
-  ungroup(.) %>% 
-  select(., everything(), -position) %>% 
-  pivot_wider(., names_from = new_position, values_from = index_value) %>% 
-  as.data.frame(.)
-
-rownames(EVN_ENT) <- EVN_ENT$id
-EVN_ENT <- EVN_ENT[,2:length(EVN_ENT)]
-
-ts_list_EVN_ENT <- tslist(EVN_ENT) %>% 
-  map(., na.omit)
-
-cluster <- tsclust(ts_list_EVN_ENT, type = "partitional", seed = 123, distance = "dtw", k = 5)
-cvi(cluster, type = "valid")
-plot(cluster)
-print(cluster)
+cluster_assignment <- left_join(indices, cluster_numbers) %>% 
+  write.csv(., getDataPath("STSC", "Results", paste(cluster_method, k, ".csv", sep = "")), row.names = F)
 
 
