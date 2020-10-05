@@ -67,11 +67,6 @@ ts_list <- tslist(ts_clust) %>%
 
 cluster <- tsclust(ts_list, type = "hierarchical", seed = 123, distance = "dtw", k = 5)
 cvi(cluster, type = "valid")
-
-
-<<<<<<< HEAD
-cluster <- tsclust(ts_list, type = "hierarchical", distance = "dtw")
-
 plot(cluster)
 
 clustered_data_tidy <- as.data.frame(as.table(cluster@cluster))
