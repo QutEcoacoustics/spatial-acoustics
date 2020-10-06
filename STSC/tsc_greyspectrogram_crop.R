@@ -7,14 +7,14 @@ library(magick)
 rm(list = ls())
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
+  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-cluster_results <- read.csv(getDataPath("STSC", "Results", "partitional5.csv")) %>%
+cluster_results <- read.csv(getDataPath("STSC", "Results", "BOW_ENT_ACI_hierarchical5.csv")) %>%
   separate(id, into = c("point1", "index_name", "motif_number", "what")) %>% 
-  group_by(., fid_what) %>% 
-  mutate(., new_position = order(order(position))) %>% 
-  ungroup(.) %>%
+  #group_by(., fid_what) %>% 
+  #mutate(., new_position = order(order(position))) %>% 
+  #ungroup(.) %>%
   select(everything(), -c(point1, position)) %>%
   mutate(image_file = paste(FileName, "__", index_name, ".png", sep = "")) %>% 
   group_by(image_file) %>% 
