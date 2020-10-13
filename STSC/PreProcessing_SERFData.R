@@ -8,7 +8,7 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-indices <- read.csv(getDataPath("Chapter2_SoundscapeTemporalAssessment", "SERF_AI_PreProcessed", "26.06.2020_131415indices.csv")) %>% 
+indices <- read.csv(getDataPath("Chapter2_SoundscapeTemporalAssessment", "SERF_AI_PreProcessed", "20.07.2020_151617indices.csv")) %>% 
   #separate(., col = FileName, into = c("location", "rec", "other"), sep = "-", remove = F) %>% 
   #separate(., col = other, into = c("point", "date", "time"), sep = "_", remove = T) %>%
   #separate(df, col = date, into = c("year", "monthday"), sep = 4, remove = F) %>% 
@@ -18,21 +18,20 @@ indices <- read.csv(getDataPath("Chapter2_SoundscapeTemporalAssessment", "SERF_A
 
 point_id <- "SERF"
 point_id_lower <- "serf"
-index_name <- "EventsPerSecond"
-index_abb <- "EPS"
-month <- 3
-year <- 2013
+index_name <- "AcousticComplexity"
+index_abb <- "ACI"
+target_month <- 03
+target_year <- 2015
 
-test <- filter(indices, year == year & month == month)
 
-test <- indices %>% 
-  filter(., year == 2013 & month == 3) %>%
+indices %>% 
+  filter(., year == target_year & month == target_month) %>%
   with(., .[order(as.numeric(date), as.numeric(time), ResultMinute),]) %>% 
   select(., all_of(index_name)) %>% 
-  write.table(., getDataPath("STSC", paste(point_id, index_name, year, month, ".txt", sep = "")), row.names = F, col.names = F)
+  write.table(., getDataPath("STSC", paste(point_id, index_name, target_year, target_month, ".txt", sep = "")), row.names = F, col.names = F)
 
-test <- indices %>% 
-  filter(., year == year & month == month) %>%
+indices %>% 
+  filter(., year == target_year & month == target_month) %>%
   with(., .[order(as.numeric(date), as.numeric(time), ResultMinute),]) %>% 
   select(., AcousticComplexity, EventsPerSecond, TemporalEntropy, FileName, location, date, time, ResultStartSeconds, ResultMinute, FID, year, month, day) %>% 
-  write.csv(., getDataPath("STSC", "Results", point_id, paste(point_id, year, month, ".csv", sep = "")))
+  write.csv(., getDataPath("STSC", "Results", point_id, paste(point_id, target_year, target_month, ".csv", sep = "")))
