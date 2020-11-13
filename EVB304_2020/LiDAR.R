@@ -1,30 +1,16 @@
 library(lidR)
 library(raster)
 library(rgdal)
-library(sf)
 
-<<<<<<< HEAD
 
 #Reading the .las file
 fzone <- readLAS("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/BatLiDAR/Fzone.las")
-#rzone <- readLAS("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/BatLiDAR/Rzone.las")
+rzone <- readLAS("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/BatLiDAR/Rzone.las")
 
 #Reading the DEM
 dem <- raster("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/GIS/DEM_5m_3857/1DEM_3857.tif")
 
 #Checking objects - note crs
-=======
-fzone <- readLAS("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/BatLiDAR/Fzone.las")
-rzone <- readLAS("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/BatLiDAR/Rzone.las")
-dem <- raster("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/GIS/DEM_5m_3857/1DEM_3857.tif")
-serf_boundary <- st_read("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/EVB304/SERF_Boundary_3857.shp")
-
-
-dem <- projectRaster(dem, crs = "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs")
-serf_boundary <- st_set_crs(serf_boundary, )
-
-serf_boundary
-
 print(fzone)
 print(dem)
 
@@ -60,9 +46,12 @@ trees <- find_trees(norm_z, algorithm = lmf(10, shape = "square"))
 plot(trees)
 
 #Mapping point density - what does this means? More points = more hits...
-point_density <- grid_density(norm_z, 5)
+point_density <- grid_density(fzone, 5)
 plot(point_density)
+summary(point_density)
+library(raster)
+density(point_density)
 
 #Leaf area density - dz = stratification: will measure leaf density every x metres
-leaf_density <- LAD(norm_z@data$Z, dz = 1)
+leaf_density <- LAD(fzone@data$Z, dz = 6.71)
 plot(leaf_density)
