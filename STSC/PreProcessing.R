@@ -1,10 +1,12 @@
 library(tidyverse)
 
+rm(list = ls())
+
 getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-df <- read.csv(getDataPath("Fieldwork_Bowra", "Oct2019", "WindRemoval_SpectralIndices_Channel1", "SummaryIndices_Channel1_WindRemoved.csv"))
+df <- read.csv(getDataPath("Fieldwork_Bowra", "Aug2019_SummaryIndices_Prepared", "indices_all_AM.csv"))
 
 
 
@@ -13,15 +15,7 @@ df_order <- df %>%
   with(., .[order(date, time, ResultMinute),]) %>% 
   select(., AcousticComplexity, EventsPerSecond, TemporalEntropy)
 
-write.csv(df_order, getDataPath("STSC", "SERF", "201503_SERF.csv"))
+write.csv(df_order, getDataPath("STSC", "Bowra", "201503_SERF.csv"))
 
 df_index <- select(df_order, AcousticComplexity) %>% 
   write.table(., getDataPath("STSC", "201503_SERF_ACI.txt"), row.names = FALSE, col.names = FALSE)
-
-
-
-                        
-motifs <- read.table("C:/Work/STSC/resACI_432.txt")
-with(motifs, motifs[order(V1),])
-
-unique(df$ID)

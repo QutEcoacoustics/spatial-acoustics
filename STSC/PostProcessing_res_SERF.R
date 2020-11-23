@@ -31,7 +31,7 @@ parameters <- read.csv(getDataPath("Results", point, "motif_info.csv"))
 
 index <- "ACI"
 index_select <- "AcousticComplexity"
-cut_threshold <- 4
+#cut_threshold <- 4
 filename_results <- paste("result", index, "_SERF_432.txt", sep = "")  
 
 #TS Graphs - Checking for overlaps and true positives
@@ -57,7 +57,7 @@ res <- rename(res, FirstInstance_Start = V1,
                                   Length = V5,
                                   Distance = V6) %>%
   mutate(., id = 1:as.numeric(count(res))) %>% 
-  filter(., Distance <= cut_threshold) %>% 
+  #filter(., Distance <= cut_threshold) %>% 
   select(., id, everything()) %>% 
   pivot_longer(., cols = 2:5, names_to = "Instance", values_to = "position") %>% 
   mutate(., Instance = gsub(pattern = "FirstInstance", replacement = "motif", x = Instance)) %>%

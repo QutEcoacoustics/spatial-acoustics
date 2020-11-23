@@ -11,6 +11,7 @@ getDataPath <- function (...) {
 }
 
 data <- "Bowraaug"
+#point <- "20153"
 
 
 motif_result <- read.csv(getDataPath("STSC", "Results", data, paste(data, "motif_complete.csv", sep = ""))) %>%
@@ -30,4 +31,6 @@ for (row in 1:nrow(motif_result)) {
     image_crop(., geometry_area(height = 256, width = motif_result$length[row]-(1-motif_result$ResultMinute[row]), y_off = 20, x_off = motif_result$ResultMinute[row])) %>% 
     image_write(., getDataPath("Chapter1_FineScaleAcousticSurvey", "STSC_GreySpectrograms", "DiscriminantAnalysis", data, paste(motif_result$point[row], motif_result$fid_what[row], motif_result$image_file[row], sep = "_")))
 }
+
+
 

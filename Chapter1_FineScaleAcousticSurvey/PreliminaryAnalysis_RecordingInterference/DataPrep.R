@@ -7,39 +7,72 @@ rm(list = ls())
 
 directory <- setwd("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Aug2019/")
 
-output_dir <- ("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Aug2019/Aug2019_SummaryIndices_Prepared/")
+output_dir <- ("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Aug2019_SummaryIndices/")
 
 files <- list.files(directory, pattern = ".Indices.csv", full.names = T, recursive = T)
 
 name <- basename(files)
 name <- gsub(pattern = "__Towsey.Acoustic.Indices.csv", replacement = "", x = name)
 
+df <- data.frame(BackgroundNoise = numeric(),
+                 Snr = numeric(),
+                 Activity = numeric(),
+                 EventsPerSecond = numeric(),
+                 HighFreqCover = numeric(),
+                 MidFreqCover = numeric(),
+                 LowFreqCover = numeric(),
+                 AcousticComplexity = numeric(),
+                 TemporalEntropy = numeric(),
+                 EntropyOfAverageSpectrum = numeric(),
+                 EntropyOfPeaksSpectrum = numeric(),
+                 EntropyOfVarianceSpectrum = numeric(),
+                 ClusterCount = numeric(),
+                 Ndsi = numeric(),
+                 SptDensity = numeric(),
+                 FileName = factor(),
+                 ResultMinute = integer(),
+                 filepath = character(),
+                 point = character(),
+                 date = numeric(),
+                 time = numeric())
+
 for (file in files) {
- read.csv(file) %>% 
-    select(., BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName) %>% 
-    #mutate(., FileName = name) %>%
-    #select(., -X, -X.1, -X.2, -X.3, -X.4) %>%
-    separate(., col = FileName, into = c("location", "rec", "other"), sep = "-", remove = F) %>% 
-    #select(., -1, -X, -X.5, -1) %>% 
-    separate(., col = other, into = c("point", "date", "time"), sep = "_", remove = T) %>%
-    #select(., -path) %>%
-    #select(., -Date, -test2) %>% 
-    #separate(., col = test1, into = c("test1", "Transectpoint"), sep = "/", remove = T) %>% 
-    #select(., -test1) %>%
-    #mutate(., "Transect" = substr(Transectpoint, 1, 2)) %>% 
-    #mutate(., "Point" = substr(Transectpoint, 3, 5)) %>% 
+ i <- read.csv(file) %>% 
+    select(., BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName, ResultMinute) %>% 
+    mutate(., filepath = file) %>% 
+    separate(., col = filepath, into = c("a", "b", "c", "d", "e", "f", "g", "h", "i", "point", "j", "k", "l"), remove = F, sep = "/") %>% 
+    separate(.,  col = FileName, into = c("date", "time"), sep = "_", remove = F) %>% 
+    select(., -c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"))
+  df <- rbind(i, df)
+}
+
+write.csv(df, paste(output_dir, "Bowraaug_indices_complete.csv", sep = "/"))
+
+   #select(., -X, -X.1, -X.2, -X.3, -X.4) %>%
+    # separate(., col = FileName, into = c("location", "rec", "other"), sep = "-", remove = F) %>% 
+    # #select(., -1, -X, -X.5, -1) %>% 
+    # separate(., col = other, into = c("point", "date", "time"), sep = "_", remove = T) %>%
+    # select(., -path) %>%
+    # select(., -Date, -test2) %>% 
+    # separate(., col = test1, into = c("test1", "Transectpoint"), sep = "/", remove = T) %>% 
+    # select(., -test1) %>%
+    # mutate(., "Transect" = substr(Transectpoint, 1, 2)) %>% 
+    # mutate(., "Point" = substr(Transectpoint, 3, 5)) %>% 
   #select(., -X.4, -X.3, -X.2, -X.1, -X) %>% 
   #select(., -X.5) %>%
   
-    write.csv(paste0(output_dir,name,".csv",sep=""))
+    write.csv(paste0(output_dir, name,".csv",sep=""))
 }
 
 files <- as.list(files)
-df <- lapply(files, read.csv) 
-df<-do.call(rbind, df)
-#df <- select(df, BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName, ResultMinute)
-df <- separate(., col = FileName, into = c("location", "rec", "other"), sep = "-", remove = F)
-  write.csv(df, "indices_all1.csv")
+df <- lapply(files, read.csv) %>%
+  map(., select, BackgroundNoise, Snr, Activity, EventsPerSecond, HighFreqCover, MidFreqCover, LowFreqCover, AcousticComplexity, TemporalEntropy, EntropyOfAverageSpectrum, EntropyOfPeaksSpectrum, EntropyOfVarianceSpectrum, ClusterCount, Ndsi, SptDensity, FileName, ResultMinute) %>% 
+  map(., mutate, filepath = files) %>% 
+  map(., separate, col = filepath, into = c("a", "b", "c", "d", "e", "f", "g", "h", "i", "point", "j", "k", "l"), remove = F, sep = "/") %>% 
+  map(., separate, col = FileName, into = c("date", "time"), sep = "_", remove = F) %>% 
+  map(., select, -c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"))
+ df <- do.call(rbind, df)
+  write.csv(., paste(output_dir, "Bowraaug_indices_complete.csv", sep = "/"))
   
 g <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Aug2019_PreliminaryAnalysis_RecordingInterferences/test.csv")
 g <- mutate(g, FID = paste(Transectpoint, rec, FileName, ResultStartSeconds, sep = "_"))

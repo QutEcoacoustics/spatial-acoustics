@@ -9,7 +9,7 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
 }
 
-point <- "WB56"
+point <- "WB49"
 #batch <- "201503_"
 filename_complete_ts <- paste(point, ".csv", sep = "")
 
@@ -23,7 +23,7 @@ obs <- 1
 
 index <- parameters$index_abb[obs]
 index_select <- parameters$index_name[obs]
-#cut_threshold <- parameters$threshold[obs]
+cut_threshold <- 4
 filename_results <- parameters$filename[obs]  
 
 #TS Graphs - Checking for overlaps and true positives
@@ -41,7 +41,7 @@ ts <- complete_ts %>%
 
 res <- read.table(getDataPath("Results", point, filename_results))
 
-res <- rename(res, FirstInstance_Start = V1,
+res <- dplyr::rename(res, FirstInstance_Start = V1,
               FirstInstance_End = V2,
               SecondInstance_Start = V3,
               SecondInstance_End = V4,
@@ -83,9 +83,9 @@ for (row in 1:nrow(ts)) {
 write.csv(ts, getDataPath("Results", point, paste(point, index, "motif_09102020.csv", sep = "_")))
 
 #Preparing for the plot
-plot_ts <- select(ts, reference, position, Index)
+plot_ts <- dplyr::select(ts, reference, position, Index)
 
-plot_motif <- select(ts, motif, position, Index) %>% 
+plot_motif <- dplyr::select(ts, motif, position, Index) %>% 
   rename(., reference = motif) %>% 
   filter(reference != "NA")
 
