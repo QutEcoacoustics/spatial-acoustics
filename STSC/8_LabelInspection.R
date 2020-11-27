@@ -8,10 +8,12 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-data <- "Bowraaug"
+data <- "SERF"
+
+chapter <- "Chapter2_SoundscapeTemporalAssessment"
 
 
-df <- read.csv(getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", paste(data, "_component_RFlabels.csv", sep = ""))) %>% 
+df <- read.csv(getDataPath(chapter, "DiscriminantAnalysis", paste(data, "_component_RFlabels.csv", sep = ""))) %>% 
   mutate(., subject = as.factor(1:nrow(.))) %>% 
   filter(., component != "") %>% 
   droplevels(.)
@@ -31,7 +33,8 @@ data.frame(table(graph_df$response, graph_df$survey, graph_df$subject)) %>%
   geom_flow() +
   geom_stratum() +
   geom_text(stat = "stratum") +
-  scale_fill_manual(values = c("#99d8c9", "#fdbb84", "#bdbdbd"))
+  scale_fill_manual(values = c("#99d8c9", "#fdbb84", "#bdbdbd")) +
+  ggsave(getDataPath(chapter, "DiscriminantAnalysis", paste(data, "_alluvial_component.png", sep = "")))
   
 
 graph_df <- select(df, component, component_model,  classID, subject) %>% 
@@ -44,4 +47,5 @@ data.frame(table(graph_df$response, graph_df$survey, graph_df$subject, graph_df$
   geom_flow() +
   geom_stratum() +
   geom_text(stat = "stratum") +
-  scale_fill_manual(values = c("#99d8c9", "#fdbb84", "#bdbdbd", "#bcbddc", "#fa9fb5"))
+  scale_fill_manual(values = c("#99d8c9", "#fdbb84", "#bdbdbd", "#bcbddc", "#fa9fb5")) +
+  ggsave(getDataPath(chapter, "DiscriminantAnalysis", paste(data, "_alluvial_componentandclasses.png", sep = "")))

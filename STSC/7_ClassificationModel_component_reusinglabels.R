@@ -19,10 +19,6 @@ new_data <- read.csv(getDataPath("Chapter1_FineScaleAcousticSurvey", "Discrimina
   rename(., id = X) %>% 
   mutate_at(vars(3:ncol(.)), na.roughfix)
 
-rownames(new_data) <- new_data$id
-
-new_train_data <- filter(new_data, classID != "") 
-
 
 # sample_size <- ceiling(nrow(model_data)*0.30)
 # 
@@ -56,6 +52,15 @@ plot_data$index <- as.factor(plot_data$index)
 
 plot(plot_data$component, plot_data$index)
 plot(plot_data$point, plot_data$component)
+
+new_data <- read.csv(getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", paste(data, "_component_RFlabels.csv", sep = ""))) %>% 
+  #rename(., id = X) %>% 
+  mutate_at(vars(3:ncol(.)), na.roughfix)
+
+
+rownames(new_data) <- new_data$id
+
+new_train_data <- filter(new_data, classID != "") 
 
 
 #Splitting the data into training (60%) and testing (40%)
@@ -100,7 +105,7 @@ train_index <- sample(1:nrow(model_data), 0.6 * nrow(model_data))
 test_index <- setdiff(1:nrow(model_data), train_index)
 
 
-train <- model_data %>% #[train_index,]%>%
+train <- model_data[train_index,] %>%
   droplevels(.$component) %>%
   droplevels(.$index)
 
@@ -114,15 +119,6 @@ rf <- randomForest(component ~ ., data = train, importance = T, proximity = T, )
 print(rf)
 
 varImpPlot(rf)
-
-prediction <- predict(rf, newdata = test)
-
-
-table(test$component, prediction)
-
-
-(sum(test$component==prediction)) / nrow(test)
-
 
 classifier <- separate(new_data, col = id, into = c("point", "index", "number", "what"), remove = F) %>% 
   select(., component, index, all_of(importance)) %>% 
