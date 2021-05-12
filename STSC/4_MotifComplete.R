@@ -1,23 +1,16 @@
 library(tidyverse)
-library(ggplot2)
-library(purrr)
-library(data.table)
-library(BHC)
 
 rm(list = ls())
-
-# cluster_method <- "partitional"
-# k = 5
 
 getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-data <- "Bowraaug"
-#point <- "WBA2O"
+#Preparing a file with all the motifs for all points together and additional data necessary for further analysis
 
-#list_matchfiles <- list.files(getDataPath("STSC", "Results", "SERF"), pattern = "*_20153_match", recursive = T)
-list_motiffiles <- list.files(getDataPath("STSC", "Results", data), pattern = "*_motif.csv", recursive = T)
+data <- "Bowraaug"
+
+list_motiffiles <- list.files(getDataPath("STSC", "Test", "Results"), pattern = "*_motif.csv", recursive = T)
 
 motif_complete <- data.frame(position =	integer(),
                              index_value = numeric(),
@@ -33,7 +26,7 @@ motif_complete <- data.frame(position =	integer(),
                              fid_what = factor())
 
 for (file in list_motiffiles) {
-  file_result <- read.csv(getDataPath("STSC", "Results", data, file)) %>%
+  file_result <- read.csv(getDataPath("STSC", "Test", "Results", file)) %>%
     dplyr::filter(., motif != is.na(T)) %>%
     dplyr::rename(., fid_what = motif) %>%
     dplyr::rename(., index_value = Index) %>%
@@ -45,4 +38,4 @@ for (file in list_motiffiles) {
 }
 
 
-indices <- write.csv(motif_complete, getDataPath("STSC", "Results", data, paste(data, "motif_complete.csv", sep = "")))
+indices <- write.csv(motif_complete, getDataPath("STSC", "Test", "Results", paste(data, "motif_complete.csv", sep = "")))

@@ -1,3 +1,6 @@
+#Cluster inspection
+
+library(ggplot2)
 library(tidyverse)
 library(magick)
 
@@ -11,7 +14,7 @@ data <- "Bowraaug"
 #point <- "WA003"
 
 
-motif_result <- read.csv(getDataPath("STSC", "Test", "Results", paste(data, "motif_complete.csv", sep = ""))) %>%
+motif_result <- read.csv(getDataPath("STSC", "Results", data, paste(data, "motif_complete.csv", sep = ""))) %>%
   separate(id, into = c("point", "index_name", "motif_number", "what"), remove = F) %>% 
   group_by(., id) %>% 
   mutate(., new_position = order(order(position))) %>% 
@@ -26,7 +29,7 @@ for (row in 1:nrow(motif_result)) {
   list.files(getDataPath("Fieldwork_Bowra", "Aug2019", motif_result$point[row]), pattern = motif_result$image_file[row], recursive = T, full.names = T) %>% 
   image_read(.) %>% 
     image_crop(., geometry_area(height = 256, width = motif_result$length[row]-(1-motif_result$ResultMinute[row]), y_off = 20, x_off = motif_result$ResultMinute[row])) %>% 
-    image_write(., getDataPath("STSC", "Test", "Figures", paste(motif_result$point[row], motif_result$fid_what[row], motif_result$image_file[row], sep = "_")))
+    image_write(., getDataPath("Chapter1_FineScaleAcousticSurvey", "STSC_GreySpectrograms", "DiscriminantAnalysis", "New folder", paste(motif_result$point[row], motif_result$fid_what[row], motif_result$image_file[row], sep = "_")))
 }
 
 

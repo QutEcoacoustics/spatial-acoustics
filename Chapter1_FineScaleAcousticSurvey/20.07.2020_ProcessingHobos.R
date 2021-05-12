@@ -2,18 +2,18 @@ library(tidyverse)
 library(purrr)
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Oct2019",  ...))
+  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Fieldwork_Bowra/Aug2019_HOBOS/output",  ...))
   
 }
 
-files <- list.files(path = getDataPath("hobos_processed"), pattern = ".csv", full.names = T)
+files <- list.files(path = getDataPath(), pattern = "1.csv", full.names = T)
 
 Hobos_df <- lapply(files, read.csv) %>%
   map(., separate, Date, into = c("month", "day", "year"), sep = "/", remove = F) %>% 
   map(., mutate, Date_mod = paste("2019", month, day, sep = "")) %>% 
   map(., separate, Time, into = c("hour", "min", "sec"), sep = ":", remove = F) %>% 
   map_df(., select, c("Date", "Time", "time_mod", "hour", "min", "sec", "temperature", "humidity", "hobo", "point", "Date_mod")) %>%
-  write.csv(., "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/16.07.2020_HobosOct.csv")
+  write.csv(., "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/26.02.2021_Hobosaug.csv")
 
 df_vars <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/13.07.2020_newmodelvars.csv")
 Hobos_df <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter1_FineScaleAcousticSurvey/16.07.2020_HobosOct.csv")

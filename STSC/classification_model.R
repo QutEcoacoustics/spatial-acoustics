@@ -81,7 +81,7 @@ labelled <- separate(labelled, col = id, into = c("point", "index", "number", "w
 
 labelled$index <- as.factor(labelled$index)
 
-labelled <- select(labelled, classID, everything(), -c(id, number, what, point)) 
+labelled <- select(labelled, classID, everything(), -c(id, number, what, point))
 
 # plot_data <- pivot_longer(labelled_complete, cols = 3:130, names_to = "wavelet")
 # 
@@ -158,10 +158,12 @@ print(rf)
 
 varImpPlot(rf)
 
-prediction <- predict(ct, newdata = test)
+prediction <- predict(rf, newdata = test)
 
 
 (sum(test$bio==prediction)) / nrow(test)
+
+
 
 
 library(party)

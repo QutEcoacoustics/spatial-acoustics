@@ -1,0 +1,12 @@
+model
+{
+    b0 ~ dnorm(0.00000E+00, 0.001)
+    Z ~ dnorm(0.00000E+00, 0.001)
+    sigma ~ dunif(0.00000E+00, 100)
+    tau <- 1/(sigma * sigma)
+    for (i in 1:1825) {
+        mu[i] <- b0 + 3000 * exp(-Z * Time[i])
+        Price[i] ~ dnorm(mu[i], tau)
+        Price_pred[i] ~ dnorm(mu[i], tau)
+    }
+}

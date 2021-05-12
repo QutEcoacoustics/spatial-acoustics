@@ -1,0 +1,1 @@
+Error in cmdscale(dist, k = k) : NA values not allowed in 'd'

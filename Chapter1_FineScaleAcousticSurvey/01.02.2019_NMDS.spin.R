@@ -1,0 +1,738 @@
+#GLM to test which variables are the most important shaping the indices#
+#Marina Scarpelli#
+#07.01.2020#
+
+rm(list = ls())
+
+library(tidyverse)
+library(ggplot2)
+library(stringi)
+library(car)
+library(data.table)
+library(MuMIn)
+
+#Reading and preparing the data ####
+getDataPath <- function (...) {
+  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
+}
+
+chapter <- "Chapter1_FineScaleAcousticSurvey"
+
+complete_df <- read.csv(getDataPath(chapter, "27.02.2021_CompleteData.csv")) %>% 
+  mutate_at(c(73:80, 87:101), scale) %>% 
+  mutate(., period = case_when(hour > 4 & hour <= 11 ~ "morning",
+                                                hour > 11 & hour <= 19 ~ "afternoon",
+                                                T ~ "night"))
+#Splittinng the df into bird and insects ####
+#Bird analysis ##
+bird_df <- filter(complete_df, class_model == "bird") %>% 
+  droplevels(.)
+
+#Insect analysis #
+
+insect_df <- filter(complete_df, class_model == "insect") %>% 
+  droplevels(.)
+
+#Removing highly correlated variables ### removed: SAVI, mean humidity, nt height, ns height and litter####
+# cor <- cor(bird_df[c(73:80, 87:101)]) %>% 
+#   write.csv(getDataPath(chapter, "27.02.2021_birdcorrelation_landvariables.csv"))
+
+#lm for mean and sd have low r squared so I'll try to group land variables and see if I can improve things - also maybe adding points to it?
+
+lm.global <- lm(sd ~ CanopyCover +
+                   ShrubCover +
+                   CanopyHeight +
+                   SubcanopyHeight +
+                   Slope +
+                   Aspect +
+                   Elevation +
+                   DistWater +
+                   aug_ndvi_avg +
+                   mean_temp +
+                   NT_DIST_AVG +
+                   NS_DIST_AVG +
+                   GC_NG_AVG +
+                   GC_NF_AVG +
+                   GC_BS_AVG +
+                   GC_SH_AVG + point + period + class_model,
+                  data = complete_df)
+
+summary(lm.global)
+
+#NMDS to decrease number of land variables
+
+library(vegan)
+set.seed(123)
+
+nmds_df <- read.csv(getDataPath(chapter, "27.02.2021_CompleteData.csv")) %>% 
+  mutate(., period = case_when(hour > 4 & hour <= 11 ~ "morning",
+                               hour > 11 & hour <= 19 ~ "afternoon",
+                               T ~ "night"))
+
+land_var <- read.csv(getDataPath("Fieldwork_Bowra", "26.02.2021_dataSAVINDVI.csv"))
+
+land_var$aug_ndvi_avg <- as.numeric(land_var$aug_ndvi_avg)
+ 
+land_var <- mutate_at(land_var, vars(NT_N_DIST, NT_W_DIST, NT_S_DIST, NT_E_DIST, NS_N_DIST, NS_W_DIST, NS_S_DIST, NS_E_DIST), ~ replace(., is.na(.), 100)) %>%
+    mutate_at(., vars(NT_N_HEIGHT, NT_S_HEIGHT, NT_W_HEIGHT, NT_E_HEIGHT, NS_N_HEIGHT, NS_S_HEIGHT, NS_E_HEIGHT, NS_W_HEIGHT), ~replace(., is.na(.), 0)) %>%
+    mutate_at(., vars(GC_NF_W, Slope, Aspect, Elevation, DistWater, CanopyCover, ShrubCover, CanopyHeight, SubcanopyHeight, aug_ndvi_avg, aug_savi_avg), ~replace(., is.na(.), 0)) %>%
+    mutate(NT_DIST_AVG = (NT_N_DIST + NT_S_DIST + NT_E_DIST + NT_W_DIST)/4) %>%
+    mutate(NT_HEIGHT_AVG = (NT_N_HEIGHT + NT_S_HEIGHT + NT_E_HEIGHT + NT_W_HEIGHT)/4) %>%
+    mutate(NS_DIST_AVG = (NS_N_DIST + NS_S_DIST + NS_E_DIST + NS_W_DIST)/4) %>%
+    mutate(NS_HEIGHT_AVG = (NS_N_HEIGHT + NS_S_HEIGHT + NS_E_HEIGHT + NS_W_HEIGHT)/4) %>%
+    mutate(GC_NG_AVG = (GC_NG_N + GC_NG_S + GC_NG_E + GC_NG_W)/4) %>%
+    mutate(GC_NF_AVG = (GC_NF_N + GC_NF_S + GC_NF_E + GC_NF_W)/4) %>%
+    mutate(GC_BS_AVG = (GC_BS_N + GC_BS_S + GC_BS_E + GC_BS_W)/4) %>%
+    mutate(GC_LT_AVG = (GC_LT_N + GC_LT_S + GC_LT_E + GC_LT_W)/4) %>%
+    mutate(GC_SH_AVG = (GC_SH_N + GC_SH_S + GC_SH_E + GC_SH_W)/4) %>% 
+  select(., NT_DIST_AVG, NT_HEIGHT_AVG, NS_DIST_AVG, NS_HEIGHT_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG, aug_ndvi_avg, CanopyCover, ShrubCover, CanopyHeight, SubcanopyHeight, Slope, Aspect, Elevation, DistWater, Point, NewVegDescription) %>%
+  droplevels(.)
+
+df_newveg <- select(land_var, Point, NewVegDescription) %>% 
+  merge(., nmds_df, by.x = "Point", by.y = "point")
+
+rownames(land_var) <- land_var$Point 
+
+# #####
+# 
+# 
+# 
+# bird_df <- filter(nmds_df, class_model == "bird") %>% 
+#   group_by(point) %>% 
+#   summarise(., mean_bird = mean(mean), sd_bird = mean(sd), mean_bird_temp = mean(mean_temp)) %>% 
+#   merge(., land_var, by.x = "point", by.y = "Point", all.x = T, all.y = F) %>% 
+#   filter(., point != "WAA2O" | point != "WBA2O") %>% 
+#   #mutate_at(c(2:22), decostand, "range") %>% 
+#   droplevels(.)
+# 
+# insect_df <- filter(nmds_df, class_model == "insect") %>% 
+#   group_by(point) %>% 
+#   summarise(., mean_insect = mean(mean), sd_insect = mean(sd), mean_insect_temp = mean(mean_temp)) %>% 
+#   merge(., bird_df, by.x = "point", by.y = "point", all.x = T, all.y = T)  %>% 
+#   filter(., point != "WAA2O" | point != "WBA2O") %>% 
+#   mutate_at(c(2:22), decostand, "range") %>% 
+#   droplevels(.)
+# 
+# #####
+# 
+# rownames(nmds_df) <- nmds_df$id
+
+# df_test <- select(nmds_df, mean, sd, NT_DIST_AVG, SubcanopyHeight) %>% 
+#   mutate_at(c(1:ncol(.)), decostand, "range") %>% 
+#   droplevels(.)
+#                   
+#                   #NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG, aug_ndvi_avg, CanopyCover, ShrubCover, CanopyHeight, SubcanopyHeight, Slope, Aspect, Elevation, DistWater, mean, sd) %>% 
+#   
+# 
+# nmds_mean <- metaMDS(df_test, k = 2, trymax = 100)
+# 
+# nmds_mean
+# stressplot(nmds_mean)
+# 
+# plot(nmds_mean)
+# ordiplot(nmds_mean,type="n")
+# ordihull(nmds_mean, groups=nmds_df$class_model, lty=2) col=cores2,
+# #orditorp(nmds_mean,display="species",col="red",air=0.01)
+# #orditorp(nmds_mean,display="sites",cex=0.9,air=0.01)
+# 
+# plot(nmds_mean, type="n")
+# points(resultado.nmds, col=cores2[dados$Bloco_Amostral], pch=16)
+# ordihull(resultado.nmds, groups=dados$Bloco_Amostral, col=cores2, lty=2)
+# text(resultado.nmds, labels = row.names(bio), pos=4)
+# 
+# scores <- nmds_mean[["species"]]
+# 
+# adonis(nmds_mean[["dist"]]~nmds_df$class_model)
+
+# nmds_df$aug_ndvi_avg <- as.numeric(nmds_df$aug_ndvi_avg)
+
+
+#A PERMANOVA:
+
+colours <- c("#CCFF00", "#CCCC00",  "#CC9900", "#CC6600", "#CC3300",  "#FF00FF", "#660000", "#663399", "#666600", "#669900", "#66CC00", "#66FF00", "#009999", "#0066FF", "#000000")
+
+# rownames(insect_df) <- insect_df$point
+# 
+# df_test <- select(insect_df, mean_insect, mean_bird, NT_DIST_AVG, NT_HEIGHT_AVG, CanopyHeight, Elevation)
+# 
+# nmds_mean <- metaMDS(df_test, k = 2, try = 100)
+# 
+# nmds_mean
+# stressplot(nmds_mean)
+# 
+# plot(nmds_mean)
+# ordiplot(nmds_mean,type="n")
+# orditorp(nmds_mean,display="species",col="red",air=0.01)
+# orditorp(nmds_mean,display="sites",cex=0.9,air=0.01)
+# 
+# scores <- nmds_mean[["species"]]
+# 
+# points(nmds_mean, col= colours[land_var$NewVegDescription], pch=16)
+# #ordihull(nmds_mean, groups= land_var$NewVegDescription, lty=2)
+# #legend("topleft", legend = as.factor(land_var$NewVegDescription), fill = colours, cex = 0.5)
+# 
+# scores <- nmds_mean[["species"]]
+# 
+# adonis(df_test~insect_df$NewVegDescription)
+# anosim(df_test, insect_df$NewVegDescription)
+# 
+# ######
+# 
+# rownames(insect_df) <- insect_df$point
+# 
+# df_test <- select(insect_df, sd_insect, sd_bird, NT_DIST_AVG, NT_HEIGHT_AVG, CanopyHeight, Elevation)
+# 
+# nmds_sd <- metaMDS(df_test, k = 3, try = 100)
+# 
+# nmds_sd
+# stressplot(nmds_sd)
+# 
+# plot(nmds_sd)
+# ordiplot(nmds_sd,type="n")
+# orditorp(nmds_sd,display="species",col="red",air=0.01)
+# orditorp(nmds_sd,display="sites",cex=0.9,air=0.01)
+# 
+# points(nmds_sd, col= colours[insect_df$NewVegDescription], pch=16)
+# #ordihull(nmds_mean, groups= land_var$NewVegDescription, lty=2)
+# legend("topleft", legend = as.factor(insect_df$NewVegDescription), fill = colours, cex = 0.5)
+# 
+# scores <- nmds_sd[["species"]]
+# 
+# adonis(df_test~insect_df$NewVegDescription)
+# anosim(df_test, insect_df$NewVegDescription)
+
+
+#Complete model - birds and insects 
+
+row.names(df_newveg) <- df_newveg$id
+
+colours <- c("#CCFF00", "#CCCC00",  "#CC9900", "#CC6600", "#CC3300",  "#FF00FF", "#660000", "#663399", "#666600", "#669900", "#66CC00", "#66FF00", "#009999", "#0066FF", "#000000")
+
+#NMDS - complete model - no convergence ####
+
+df_test <- select(df_newveg, CanopyCover, ShrubCover, CanopyHeight, SubcanopyHeight, Slope, Aspect, Elevation, DistWater, aug_ndvi_avg, mean_temp, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+
+#NMDS - canopy + water + temp model - no convergence ####
+
+df_test <- select(df_newveg, CanopyCover, CanopyHeight, aug_ndvi_avg, mean_temp, NT_DIST_AVG, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#NMDS - canopy and temperature model - no convergence####
+
+df_test <- select(df_newveg, CanopyCover, CanopyHeight, aug_ndvi_avg, mean_temp, NT_DIST_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+
+#NMDS - canopy and dist to water ####
+
+df_test <- select(df_newveg, CanopyCover, CanopyHeight, aug_ndvi_avg, NT_DIST_AVG, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#Shrub + dist to water + temp
+df_test <- select(df_newveg, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg, DistWater, mean_temp) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#Shrub and temp model
+df_test <- select(df_newveg, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg,  mean_temp) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#Shrub and dist to water
+df_test <- select(df_newveg, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#Shrub only model
+df_test <- select(df_newveg, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#DEM model + Dist water + temp
+
+df_test <- select(df_newveg, Slope, Aspect, Elevation, mean_temp, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#DEM model + dist water
+
+df_test <- select(df_newveg, Slope, Aspect, Elevation, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#DEM model + temp
+
+df_test <- select(df_newveg, Slope, Aspect, Elevation, mean_temp) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#DEM model
+
+df_test <- select(df_newveg, Slope, Aspect, Elevation) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+stressplot(nmds_sd)
+
+plot(nmds_sd)
+ordiplot(nmds_sd,type="n")
+orditorp(nmds_sd,display="species",col="red",air=0.01)
+orditorp(nmds_sd,display="sites",cex=0.9,air=0.01, labels = F)
+
+points(nmds_sd, col= colours[df_filtered$class_model], pch=16)
+#ordihull(nmds_mean, groups= land_var$NewVegDescription, lty=2)
+legend("topleft", legend = unique(df_filtered$NewVegDescription), fill = colours, cex = 0.6)
+
+scores <- nmds_sd[["species"]]
+
+adonis(df_test~df_filtered$NewVegDescription)
+anosim(df_test, df_filtered$NewVegDescription)
+
+#Ground Cover models
+
+#Ground cover, temp and dist to water
+df_test <- select(df_newveg, DistWater, aug_ndvi_avg, mean_temp, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#Ground cover and temp
+df_test <- select(df_newveg, aug_ndvi_avg, mean_temp, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#Ground cover and dist to water
+df_test <- select(df_newveg, DistWater, aug_ndvi_avg, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#Ground cover only
+df_test <- select(df_newveg, aug_ndvi_avg, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_sd <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_sd
+
+#Iterative models
+
+
+#Insects ####
+df_filtered <- filter(df_newveg, class_model == "insect")
+
+#Complete model - birds and insects 
+
+row.names(df_filtered) <- df_filtered$id
+
+colours <- c("#CCFF00", "#CCCC00",  "#CC9900", "#CC6600", "#CC3300",  "#FF00FF", "#660000", "#663399", "#666600", "#669900", "#66CC00", "#66FF00", "#009999", "#0066FF", "#000000")
+
+#NMDS - complete model - no convergence ####
+
+df_test <- select(df_filtered, CanopyCover, ShrubCover, CanopyHeight, SubcanopyHeight, Slope, Aspect, Elevation, DistWater, aug_ndvi_avg, mean_temp, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_complete <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_complete
+
+
+#NMDS - canopy + water + temp model - no convergence ####
+
+df_test <- select(df_filtered, CanopyCover, CanopyHeight, aug_ndvi_avg, mean_temp, NT_DIST_AVG, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_canopy1 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_canopy1
+
+#NMDS - canopy and temperature model - no convergence####
+
+df_test <- select(df_filtered, CanopyCover, CanopyHeight, aug_ndvi_avg, mean_temp, NT_DIST_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_canopy2 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_canopy2
+
+
+#NMDS - canopy and dist to water ####
+
+df_test <- select(df_filtered, CanopyCover, CanopyHeight, aug_ndvi_avg, NT_DIST_AVG, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_canopy3 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_canopy3
+
+#NMDS - canopy only ####
+
+df_test <- select(df_filtered, CanopyCover, CanopyHeight, aug_ndvi_avg, NT_DIST_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_canopy4 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_canopy4
+
+#Shrub + dist to water + temp
+df_test <- select(df_filtered, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg, DistWater, mean_temp) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_shrub1 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_shrub1
+
+#Shrub and temp model
+df_test <- select(df_filtered, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg,  mean_temp) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_shrub2 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_shrub2
+
+#Shrub and dist to water
+df_test <- select(df_filtered, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_shrub3 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_shrub3
+
+#Shrub only model
+df_test <- select(df_filtered, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_shrub4 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_shrub4
+
+#DEM model + Dist water + temp
+
+df_test <- select(df_filtered, Slope, Aspect, Elevation, mean_temp, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_dem1 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_dem1
+
+#DEM model + dist water
+
+df_test <- select(df_filtered, Slope, Aspect, Elevation, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_dem2 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_dem2
+
+#DEM model + temp
+
+df_test <- select(df_filtered, Slope, Aspect, Elevation, mean_temp) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_dem3 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_dem3
+
+#DEM model
+
+df_test <- select(df_filtered, Slope, Aspect, Elevation) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_dem4 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_dem4
+
+#Ground Cover models
+
+#Ground cover, temp and dist to water
+df_test <- select(df_filtered, DistWater, aug_ndvi_avg, mean_temp, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_ground1 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_ground1
+
+#Ground cover and temp
+df_test <- select(df_filtered, aug_ndvi_avg, mean_temp, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_ground2 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_ground2
+
+#Ground cover and dist to water
+df_test <- select(df_filtered, DistWater, aug_ndvi_avg, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_ground3 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_ground3
+
+#Ground cover only
+df_test <- select(df_filtered, aug_ndvi_avg, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_insects_ground4 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_insects_ground4
+
+#Iterative models
+
+#Insects ####
+df_filtered <- filter(df_newveg, class_model == "bird")
+
+#Complete model - birds and insects 
+
+row.names(df_filtered) <- df_filtered$id
+
+colours <- c("#CCFF00", "#CCCC00",  "#CC9900", "#CC6600", "#CC3300",  "#FF00FF", "#660000", "#663399", "#666600", "#669900", "#66CC00", "#66FF00", "#009999", "#0066FF", "#000000")
+
+#NMDS - complete model - no convergence ####
+
+df_test <- select(df_filtered, CanopyCover, ShrubCover, CanopyHeight, SubcanopyHeight, Slope, Aspect, Elevation, DistWater, aug_ndvi_avg, mean_temp, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_complete <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_complete
+
+
+#NMDS - canopy + water + temp model - no convergence ####
+
+df_test <- select(df_filtered, CanopyCover, CanopyHeight, aug_ndvi_avg, mean_temp, NT_DIST_AVG, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_canopy1 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_canopy1
+
+#NMDS - canopy and temperature model - no convergence####
+
+df_test <- select(df_filtered, CanopyCover, CanopyHeight, aug_ndvi_avg, mean_temp, NT_DIST_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_canopy2 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_canopy2
+
+
+#NMDS - canopy and dist to water ####
+
+df_test <- select(df_filtered, CanopyCover, CanopyHeight, aug_ndvi_avg, NT_DIST_AVG, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_canopy3 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_canopy3
+
+#NMDS - canopy only ####
+
+df_test <- select(df_filtered, CanopyCover, CanopyHeight, aug_ndvi_avg, NT_DIST_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_canopy4 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_canopy4
+
+#Shrub + dist to water + temp
+df_test <- select(df_filtered, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg, DistWater, mean_temp) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_shrub1 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_shrub1
+
+#Shrub and temp model
+df_test <- select(df_filtered, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg,  mean_temp) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_shrub2 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_shrub2
+
+#Shrub and dist to water
+df_test <- select(df_filtered, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_shrub3 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_shrub3
+
+#Shrub only model
+df_test <- select(df_filtered, ShrubCover, SubcanopyHeight, NS_DIST_AVG, GC_SH_AVG, aug_ndvi_avg) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_shrub4 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_shrub4
+
+#DEM model + Dist water + temp
+
+df_test <- select(df_filtered, Slope, Aspect, Elevation, mean_temp, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_dem1 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_dem1
+
+#DEM model + dist water
+
+df_test <- select(df_filtered, Slope, Aspect, Elevation, DistWater) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_dem2 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_dem2
+
+#DEM model + temp
+
+df_test <- select(df_filtered, Slope, Aspect, Elevation, mean_temp) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_dem3 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_dem3
+
+#DEM model
+
+df_test <- select(df_filtered, Slope, Aspect, Elevation) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_dem4 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_dem4
+
+#Ground Cover models
+
+#Ground cover, temp and dist to water
+df_test <- select(df_filtered, DistWater, aug_ndvi_avg, mean_temp, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_ground1 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_ground1
+
+#Ground cover and temp
+df_test <- select(df_filtered, aug_ndvi_avg, mean_temp, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_ground2 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_ground2
+
+#Ground cover and dist to water
+df_test <- select(df_filtered, DistWater, aug_ndvi_avg, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_ground3 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_ground3
+
+#Ground cover only
+df_test <- select(df_filtered, aug_ndvi_avg, NT_DIST_AVG, NS_DIST_AVG, GC_NG_AVG, GC_NF_AVG, GC_BS_AVG, GC_SH_AVG) %>% 
+  decostand(., method = "range") %>% 
+  droplevels(.)
+
+nmds_bird_ground4 <- metaMDS(df_test, k = 2, try = 100)
+
+nmds_bird_ground4
+
+#Iterative models

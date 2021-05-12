@@ -1,16 +1,17 @@
-library(tidyverse)
 library(caret)
 library(repr)
 library(data.table)
 library(TTR)
 library(forecast)
 library(lubridate)
-library(randomForest)
 library(wavelets)
-library(party)
 library(vegan)
 library(dtwclust)
 library(purrr)
+
+library(randomForest)
+library(tidyverse)
+library(party)
 
 rm(list = ls())
 
@@ -18,39 +19,11 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-data <- "Bowraoct"
+data <- "Bowraaug"
 
+labelled <- read.csv(getDataPath("STSC", "Test", paste(data, "wavelet.csv", sep = "")))
 
-labelled <- read.csv(getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", paste(data, "_wavelet_labelled.csv", sep = "")))
-
-
-# labels <- read.csv(getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", "wavelet_bow_0_labelled_simple.csv")) %>% 
-#   select(1:4)
-# 
-# new_df <- merge(x = df, y = labels, all.x = T, all.y = F ) %>% 
-#   select(., id, classID, component, bio, everything()) %>% 
-#   write.csv(., getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", paste(data, "wavelet_labelled.csv", sep = "_")), row.names = F)
-
-#After inspecting motifs, load the df with labelled data
-
-
-rownames(labelled) <- labelled$id
-
-
-
-unclass <- filter(labelled, classID == "")
-
-sample_size <- ceiling(nrow(labelled)*0.30)
-
-sample(rownames(unclass), size = sample_size, replace = F)
-
-labelled <- separate(labelled, col = id, into = c("point", "index", "number", "what"), remove = F)
-
-labelled$index <- as.factor(labelled$index)
-
-labelled_complete <- select(labelled, classID, everything(), -c(id, number, what, point, batch)) %>% 
-  na.roughfix(labelled)
-
+unlabelled <- filter(labelled, class == "NA")
 
 labelled_complete <- dplyr::filter(labelled_complete, classID != "") %>% 
   droplevels(.$classID) %>%
@@ -108,7 +81,7 @@ set.seed(123)
 
 
 
-rf <- randomForest(classID ~ ., data = train, importance = T, proximity = T)
+rf <- randomForest(classID ~ ., data = train, importance = T, proximity = T, na)
 
 print(rf)
 

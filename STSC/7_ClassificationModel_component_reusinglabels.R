@@ -19,17 +19,20 @@ new_data <- read.csv(getDataPath("Chapter1_FineScaleAcousticSurvey", "Discrimina
   rename(., id = X) %>% 
   mutate_at(vars(3:ncol(.)), na.roughfix)
 
+new_labels <- filter(new_data, component != "")
 
+head(new_labels)
 # sample_size <- ceiling(nrow(model_data)*0.30)
 # 
 # sample <- as.data.frame(sample(rownames(model_data), size = sample_size, replace = F)) %>% 
 #   write.csv(getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", paste(data, "_LabelSample.csv", sep = "")))
 
-labelled <- read.csv(getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", paste(train_label, "_wavelet_labelled_balanced.csv", sep = "")))
+labelled <- read.csv(getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", paste(train_label, "_component_RFlabels.csv", sep = ""))) %>% filter(., component_model == component) %>% 
+  rbind(labelled, new_labels)
+
+head(labelled)
 
 rownames(labelled) <- labelled$id
-
-unclass <- filter(labelled, classID == "")
 
 model_data <- separate(labelled, col = id, into = c("point", "index", "number", "what"), remove = F) %>% 
   select(., component, index, everything(), -c("point", "number", "what", "classID", "id")) %>% 
@@ -135,6 +138,103 @@ new_data$component_model <- label_model
 
 new_data <- select(new_data, id, classID, component, component_model, everything())
 
-write.csv(new_data, getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", paste(data, "_component_RFlabels.csv", sep = "")), row.names = F)
+table(new_data$component, label_model)
+
+
+(sum(new_data$component==new_data$component_model)) / nrow(model_data)
+
+#Optimising
+
+importance <- as.data.frame(importance(rf)) %>%
+  filter(., MeanDecreaseAccuracy >= 0) %>%
+  row.names(.)
+# 
+model_data <- select(model_data, component, all_of(importance)) %>%
+  droplevels(.)
+
+floor(sqrt(ncol(model_data) - 1))
+
+mtry <- tuneRF(model_data[-1],model_data$component, ntreeTry=500,
+               stepFactor=1.5,improve=0.01, trace=TRUE, plot=TRUE)
+best.m <- mtry[mtry[, 2] == min(mtry[, 2]), 1]
+print(mtry)
+print(best.m)
+
+#Optimising
+
+model_data <- separate(labelled, col = id, into = c("point", "index", "number", "what"), remove = F) %>%
+  select(., component, all_of(importance)) %>%
+  filter(., component != "") %>%
+  droplevels(.$index) %>%
+  droplevels(.$component)
+# 
+# set.seed(123)
+# 
+# 
+train <- select(train, component, all_of(importance)) %>%
+  droplevels(.)
+
+
+test <- select(test, component, all_of(importance)) %>%
+  droplevels(.)
+
+rf <- randomForest(component ~ ., data = train, importance = T, proximity = T, mtry = mtry)
+
+print(rf)
+
+varImpPlot(rf)
+
+classifier <- select(model_data, component, all_of(importance)) %>% 
+  droplevels(.)
+
+classifier$index <- as.factor(classifier$index)
+
+prediction <- predict(rf, newdata = classifier)
+
+
+table(classifier$component, prediction)
+
+
+(sum(classifier$component==prediction)) / nrow(classifier)
+
+heatmap(rf$proximity)
+
+classifier <- separate(labelled, col = id, into = c("point", "index", "number", "what"), remove = F) %>% 
+  select(., component, all_of(importance)) %>% 
+  #filter(., component == "") %>% 
+  droplevels(.)
+
+
+classifier$index <- as.factor(classifier$index)
+
+
+label_model <- as.data.frame(predict(rf, newdata = classifier, type = "prob"))
+
+rownames(label_model) <- labelled$id
+
+label_model$manual <- labelled$component
+
+label_model$model <- labelled$component_model
+
+library(ggplot2)
+
+#pivot_longer(label_model, cols = 4:5, names_to = "labeller", values_to = "label") %>% 
+ggplot(label_model, aes(y = biophony, x = geophony, colour = manual)) +
+  geom_point() +
+  ggsave(getDataPath(chapter, "DiscriminantAnalysis", paste(data, "_ProbPlot.png")))
+
+label_model <- predict(rf, newdata = classifier)
+
+
+labelled$component_model <- label_model
+
+
+labelled <- select(labelled, id, classID, component, component_model, everything())
+
+confusion_matrix <- table(labelled$component, labelled$component_model)
+
+(sum(labelled$component==labelled$component_model)) / nrow(labelled)
+
+#write.csv(labelled, getDataPath(chapter, "DiscriminantAnalysis", paste(data, "_component_RFlabels.csv", sep = "")), row.names = F)
 
 

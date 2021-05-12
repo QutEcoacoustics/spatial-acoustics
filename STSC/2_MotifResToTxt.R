@@ -9,38 +9,15 @@ getDataPath <- function (...) {
 }
 
 
-files <- list.files(getDataPath("STSC", "Results", "Bowraoct"), pattern = "res", recursive = T)
+files <- list.files(getDataPath("STSC", "Test"), pattern = "res", recursive = T)
 
 
-####After motif - processing .txt file
-
-# point_id <- "WB46"
-# point_id_lower <- "wb46"
-# index_abb1 <- "EVN"
+####After motif - processing .txt file - you will need to store the results here in a new folder unless you don't mind the original ones to be overwritten
 
 for (file in files) {
-  read.table(getDataPath("STSC", "Results", "Bowraaug", file), sep = " ", blank.lines.skip = T, fileEncoding = "UTF-16") %>%
+  read.table(getDataPath("STSC", "Test", file), sep = " ", blank.lines.skip = T) %>%
     select(., 2:7) %>% 
-    write.table(., getDataPath("STSC", "Results", "Bowraaug", file), row.names = F, col.names = F)
+    write.table(., getDataPath("STSC", "Test", "Results", file), row.names = F, col.names = F)
 }
-
-# motifs_evn <- read.table(getDataPath("STSC", paste("res", index_abb1, "_", point_id_lower, "_432.txt", sep = "")), sep = " ", blank.lines.skip = T, fileEncoding = "UTF-16") %>% 
-#   select(., 2:7)
-# 
-# write.table(motifs_evn, getDataPath("STSC", paste("result", index_abb1, "_", point_id, "_432.txt", sep = "")), row.names = F, col.names = F)
-# 
-# index_abb2 <- "ACI"
-# 
-# motifs_aci <- read.table(getDataPath("STSC", paste("res", index_abb2, "_", point_id_lower, "_432.txt", sep = "")), sep = " ", blank.lines.skip = T, fileEncoding = "UTF-16") %>% 
-#   select(., 2:7)
-# 
-# write.table(motifs_aci, getDataPath("STSC", paste("result", index_abb2, "_", point_id, "_432.txt", sep = "")), row.names = F, col.names = F)
-# 
-# index_abb3 <- "ENT"
-# 
-# motifs_ent <- read.table(getDataPath("STSC", paste("res", index_abb3, "_", point_id_lower, "_432.txt", sep = "")), sep = " ", blank.lines.skip = T, fileEncoding = "UTF-16") %>% 
-#   select(., 2:7)
-# 
-# write.table(motifs_ent, getDataPath("STSC", paste("result", index_abb3, "_", point_id, "_432.txt", sep = "")), row.names = F, col.names = F)
 
 

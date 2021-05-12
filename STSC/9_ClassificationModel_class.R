@@ -11,9 +11,9 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-data <- "SERF"
+data <- "Bowraaug"
 
-chapter <- "Chapter2_SoundscapeTemporalAssessment"
+chapter <- "Chapter1_FineScaleAcousticSurvey"
 
 #After inspecting motifs, load the df with labelled data
 
@@ -36,42 +36,46 @@ chapter <- "Chapter2_SoundscapeTemporalAssessment"
 
 #1 - DF with labels created by the component model and select only biophony
 
+
 labelled <- read.csv(getDataPath(chapter, "DiscriminantAnalysis", paste(data, "_component_RFlabels.csv", sep = ""))) %>% 
   mutate_at(vars(5:ncol(.)), na.roughfix) %>% 
-  filter(., component_model == "biophony" & component != "silence" & component != "geophony") %>%
+  filter(., component_model == "biophony" & classID != "silence" & classID != "wind" & classID != "interference") %>%
   droplevels(.)
 
 rownames(labelled) <- labelled$id
 
 #labelled <- mutate_at(labelled, vars(6:ncol(labelled)), na.roughfix)
 
-model_data <- separate(labelled, col = id, into = c("point", "index", "number", "what"), remove = F) %>% 
-  select(., classID, index, everything(), -c("point", "id", "number", "what", "component", "component_model")) %>% 
+model_data <- #separate(labelled, col = id, into = c("point", "index", "number", "what"), remove = F) %>%
+  select(labelled, classID, index_name, everything(), -c("point", "id", "number", "what", "component", "component_model", "accuracy")) %>%
+  filter(classID != "") %>% 
   droplevels(.)
 
-model_data$index <- as.factor(model_data$index)
+model_data$index_name <- as.factor(model_data$index_name)
 
 
 #2 - Separate labelled for training and testing the model - here we need to ensure the training data has all the predictors otherwise the model is unable to use them in the testing data
 
-train <- stratified(model_data, group = c("index", "classID"), size = 12, replace = F) %>% 
+train <- stratified(model_data, group = c("classID", "index_name"), size = 12, replace = F) %>% 
   droplevels(.)
 
-# train_index <- sample(1:nrow(model_data), 0.2 * nrow(model_data)) #- nrow(train))
-
-# train <- rbind(model_data[train_index,], train) %>%
-  # droplevels(.)
+train_index <- sample(1:nrow(model_data), size = (0.6 * nrow(model_data)) - nrow(train))
 
 
-# test_index <- setdiff(1:nrow(model_data), train_index)
-# 
+train <- rbind(model_data[train_index,], train) %>%
+  droplevels(.)
+
+
+test_index <- setdiff(1:nrow(model_data), train_index)
+
+
+test <- model_data[test_index,]%>%
+  droplevels(.)
+  
+# test_index <- sample(1:nrow(model_data), 0.1 * nrow(model_data))
 # 
 # test <- model_data[test_index,]%>%
-#   droplevels(.)
-  
-test_index <- sample(1:nrow(model_data), 0.1 * nrow(model_data))
-test <- model_data[test_index,]%>%
-    droplevels(.)
+#     droplevels(.)
   
 
 #3 - Build rough model using all the variables
@@ -181,8 +185,8 @@ table(test$classID, prediction)
 
 (sum(test$classID==prediction)) / nrow(test)
 
-classifier <- separate(labelled, col = id, into = c("point", "index", "number", "what"), remove = F) %>% 
-  select(., classID, all_of(importance)) %>% 
+classifier <- #separate(labelled, col = id, into = c("point", "index_name", "number", "what"), remove = F) %>% 
+  select(labelled, classID, all_of(importance)) %>% 
   mutate_at(vars(3:ncol(.)), na.roughfix) %>% 
   #filter(., component == "") %>% 
   droplevels(.)
@@ -196,6 +200,14 @@ label_model <- predict(rf, newdata = classifier)
 labelled$class_model <- label_model
 
 labelled <- select(labelled, id, classID, component, component_model, class_model, everything())
+
+
+confusion_matrix <- table(labelled$classID, labelled$classID)
+
+accuracy_df <- filter(labelled, classID != "" & classID != "interference") %>% 
+  droplevels(.)
+
+(sum(accuracy_df$classID==accuracy_df$class_model)) / nrow(accuracy_df)
 
 write.csv(labelled, getDataPath(chapter, "DiscriminantAnalysis", paste(data, "_class_RFlabels.csv", sep = "")), row.names = T)
 

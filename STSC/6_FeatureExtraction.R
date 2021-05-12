@@ -1,16 +1,8 @@
 library(tidyverse)
-library(caret)
-library(repr)
-library(data.table)
-library(TTR)
-library(forecast)
-library(lubridate)
-library(randomForest)
 library(wavelets)
-library(party)
-library(vegan)
 library(dtwclust)
 library(purrr)
+library(randomForest)
 
 rm(list = ls())
 
@@ -24,7 +16,7 @@ data <- "Bowraaug"
 
 # df with the motifs and filenames
 
-motifs <- read.csv(getDataPath("STSC", "Results", data, paste(data, "motif_complete.csv", sep = "")))
+motifs <- read.csv(getDataPath("STSC", "Test", "Results", paste(data, "motif_complete.csv", sep = "")))
 
 
 # # extracting DWT coefficients (with Haar filter)
@@ -41,9 +33,9 @@ rownames(ts_data) <- ts_data$id
 ts_data <- ts_data[,2:length(ts_data)]
 
 
-ts_list <- transpose(ts_data) %>% 
-  map(., na.omit) 
-
+ts_list <- tslist(ts_data) %>%
+  map(., na.omit)
+ 
 
 wtData <- NULL
 
@@ -58,6 +50,16 @@ for (i in ts_list) {
   
 }
 
-rownames(wtData) <- rownames(ts_data)
+wtData <- na.roughfix(wtData)
 
-write.csv(wtData, getDataPath("Chapter1_FineScaleAcousticSurvey", "DiscriminantAnalysis", paste(data, "wavelet_0.csv", sep = "")), row.names = T)
+wtData$id <- rownames(ts_data)
+
+wtData <- mutate(wtData, class = NA) %>% 
+  mutate(., component = NA) %>% 
+  select(., id, class, component, everything())
+
+
+samples <- sample(wtData$id, size = ceiling(nrow(wtData)*0.30), replace = F)
+
+write.csv(wtData, getDataPath("STSC", "Test", paste(data, "wavelet.csv", sep = "")), row.names = F)
+write.csv(samples, getDataPath("STSC", "Test", paste(data, "labels_sample.csv", sep = "")), row.names = F)
