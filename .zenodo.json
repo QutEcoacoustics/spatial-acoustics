@@ -1,0 +1,11 @@
+{
+    "upload_type": "software",
+    "creators": [
+        {
+          "orcid": "0000-0001-7315-1406", 
+          "affiliation": "Queensland University of Technology", 
+          "name": "Marina D. A. Scarpelli"
+        }
+    ], 
+    "license": "Apache-2.0"
+}
