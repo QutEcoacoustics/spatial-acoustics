@@ -10,13 +10,14 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-data <- "Bowraaug"
+data <- "SERF"
 #point <- "20153"
+chapter <- "Chapter2_SoundscapeTemporalAssessment"
 
 
 # df with the motifs and filenames
 
-motifs <- read.csv(getDataPath("STSC", "Test", "Results", paste(data, "motif_complete.csv", sep = "")))
+motifs <- read.csv(getDataPath(chapter, "Results", "4_MotifComplete", paste(data, "motif_complete.csv", sep = "")))
 
 
 # # extracting DWT coefficients (with Haar filter)
@@ -61,5 +62,5 @@ wtData <- mutate(wtData, class = NA) %>%
 
 samples <- sample(wtData$id, size = ceiling(nrow(wtData)*0.30), replace = F)
 
-write.csv(wtData, getDataPath("STSC", "Test", paste(data, "wavelet.csv", sep = "")), row.names = F)
-write.csv(samples, getDataPath("STSC", "Test", paste(data, "labels_sample.csv", sep = "")), row.names = F)
+write.csv(wtData, getDataPath(chapter, "Results", "6_FeatureExtraction", paste(data, "wavelet.csv", sep = "")), row.names = F)
+write.csv(samples, getDataPath(chapter, "Results", "6_FeatureExtraction", paste(data, "labels_sample.csv", sep = "")), row.names = F)

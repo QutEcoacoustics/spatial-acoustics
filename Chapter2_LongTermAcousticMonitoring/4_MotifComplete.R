@@ -8,9 +8,11 @@ getDataPath <- function (...) {
 
 #Preparing a file with all the motifs for all points together and additional data necessary for further analysis
 
-data <- "Bowraaug"
+data <- "SERF"
 
-list_motiffiles <- list.files(getDataPath("STSC", "Test", "Results"), pattern = "*_motif.csv", recursive = T)
+chapter <- "Chapter2_SoundscapeTemporalAssessment"
+
+list_motiffiles <- list.files(getDataPath(chapter, "Results", "3_ProcessingMotifs_cleaningup"), pattern = "*_motif.csv", recursive = T)
 
 motif_complete <- data.frame(position =	integer(),
                              index_value = numeric(),
@@ -26,7 +28,7 @@ motif_complete <- data.frame(position =	integer(),
                              fid_what = factor())
 
 for (file in list_motiffiles) {
-  file_result <- read.csv(getDataPath("STSC", "Test", "Results", file)) %>%
+  file_result <- read.csv(getDataPath(chapter, "Results", "3_ProcessingMotifs_cleaningup", file)) %>%
     dplyr::filter(., motif != is.na(T)) %>%
     dplyr::rename(., fid_what = motif) %>%
     dplyr::rename(., index_value = Index) %>%
@@ -38,4 +40,4 @@ for (file in list_motiffiles) {
 }
 
 
-indices <- write.csv(motif_complete, getDataPath("STSC", "Test", "Results", paste(data, "motif_complete.csv", sep = "")))
+indices <- write.csv(motif_complete, getDataPath(chapter, "Results", "4_MotifComplete", paste(data, "motif_complete.csv", sep = "")), row.names = F)

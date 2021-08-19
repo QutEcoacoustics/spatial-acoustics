@@ -9,15 +9,15 @@ getDataPath <- function (...) {
 }
 
 
-files <- list.files(getDataPath("STSC", "Test"), pattern = "res", recursive = T)
+files <- list.files(getDataPath("STSC", "SERF", "Results_chp2"), pattern = "res", recursive = T)
 
 
-####After motif - processing .txt file - you will need to store the results here in a new folder unless you don't mind the original ones to be overwritten
+####After motif - processing .txt file - you will need to store the results here in a new folder unless you don't mind the original ones to be overwritten - it is not 
 
 for (file in files) {
-  read.table(getDataPath("STSC", "Test", file), sep = " ", blank.lines.skip = T) %>%
+    read.table(getDataPath("STSC", "SERF", "Results_chp2", file), sep = " ", blank.lines.skip = T, fileEncoding = "UTF-16") %>%
     select(., 2:7) %>% 
-    write.table(., getDataPath("STSC", "Test", "Results", file), row.names = F, col.names = F)
+    write.table(., getDataPath("STSC", "SERF", "Results_chp2", file), row.names = F, col.names = F)
 }
 
 

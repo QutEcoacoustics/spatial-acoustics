@@ -18,7 +18,7 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
-data <- "Bowraoct"
+data <- "Bowraaug"
 #point_name <- "20153"
 
 #EventsPerSecond
@@ -27,7 +27,7 @@ data <- "Bowraoct"
 
 #List motif result files + time series files
 
-complete_ts <- read.csv(getDataPath("STSC", "Results", data, paste(data, "_complete_ts.csv", sep = ""))) #%>% 
+complete_ts <- read.csv(getDataPath("STSC", "Results", data, paste(data, "motif_complete.csv", sep = ""))) #%>% 
   rename(., position = X)
 
 

@@ -4,24 +4,26 @@ library(ggplot2)
 rm(list=ls())
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/STSC",  ...))
+  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
 #The structure here will depend on your data. Following the examples before, we had several points that were individual time series therefore that's the strcuture and that's why we have this attribute here at the start called "point". You should adapt the script and the structure of the data for your own project
 
-point <- "WA004"
+month_analysis <- "201703"
 
-data <- "Bowraaug"
+data <- "SERF"
+
+chapter <- "Chapter2_SoundscapeTemporalAssessment"
 
 #EventsPerSecond
 index <- "EVN"
 index_select <- "EventsPerSecond"
 
 #List motif result files + time series files
-filename_results <- paste("res", index, "_", point, "_432.txt", sep = "") 
-filename_complete_ts <- paste(point, data, ".csv", sep = "")
+filename_results <- paste("res", index, "_", month_analysis, "_432.txt", sep = "") 
+filename_complete_ts <- paste(month_analysis, data, ".csv", sep = "")
 
-complete_ts <- read.csv(getDataPath("Test", filename_complete_ts)) %>% 
+complete_ts <- read.csv(getDataPath(chapter, "AI_TS_monthly", filename_complete_ts)) %>% 
   rename(., position = X)
 
 
@@ -33,14 +35,14 @@ complete_ts %>% select(., 1:4) %>%
   facet_wrap(. ~ index) +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
-  ggsave(getDataPath("Test", "Figures", paste(point, "indicespertime.jpg", sep = "_")))
+  ggsave(getDataPath(chapter, "Figures", paste(month_analysis, "indicespertime.jpg", sep = "_")))
  
 
 #TS Graphs - Checking for overlaps and true positives
 
 
 ts <- complete_ts %>%
-  mutate(., point = point) %>% 
+  mutate(., month = month_analysis) %>% 
   select(., 1, all_of(index_select), 5:ncol(.)) %>% 
   mutate(., motif = NA) %>% 
   mutate(., distance = NA) %>% 
@@ -51,7 +53,7 @@ ts <- complete_ts %>%
 
 # Processing results 
 
-res <- read.table(getDataPath("Test", "Results", filename_results))
+res <- read.table(getDataPath(chapter, "STSC_Results_chp2", filename_results))
 
 res <- rename(res, FirstInstance_Start = V1,
                                   FirstInstance_End = V2,
@@ -125,7 +127,7 @@ for (row in 1:nrow(ts)) {
 ts[res_motif$Start[row]:res_motif$End[row], c("motif", "distance", "length")] <- res_motif[row, c("instance", "Distance", "Length")]
 }
 
-write.csv(ts, getDataPath("Test", "Results", paste(point, index, "motif.csv", sep = "_")))
+write.csv(ts, getDataPath(chapter, "Results", "3_ProcessingMotifs_cleaningup", paste(month_analysis, index, "motif.csv", sep = "_")))
 
 #Preparing for the plot
 # plot_ts <- select(ts, reference, position, Index)
@@ -152,33 +154,33 @@ ggplot(plot_ts, aes(x = position, y = Index)) +
   #geom_line(data = plot_match, aes(x = position, y = Index, colour = number)) + 
   scale_linetype_manual(values = "dotted") +
   theme_classic() +
-  labs(title = paste(index, point, sep = " ")) +
+  labs(title = paste(index, month_analysis, sep = " ")) +
   theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), legend.position = "none") +
-  ggsave(getDataPath("Test", "Figures", paste(point, index, "ts_motifs.jpg", sep = "")))
+  ggsave(getDataPath(chapter, "Figures", "3_ProcessingMotifs_cleaningup", paste(month_analysis, index, "ts_motifs.jpg", sep = "")))
 
 #TemporalEntropy
 
 index <- "ENT"
 index_select <- "TemporalEntropy"
 
-filename_results <- paste("res", index, "_", point, "_432.txt", sep = "") 
-filename_complete_ts <- paste(point, data, ".csv", sep = "")
+filename_results <- paste("res", index, "_", month_analysis, "_432.txt", sep = "") 
+filename_complete_ts <- paste(month_analysis, data, ".csv", sep = "")
 
-complete_ts <- read.csv(getDataPath("Test", filename_complete_ts)) %>% 
+complete_ts <- read.csv(getDataPath(chapter, "AI_TS_monthly", filename_complete_ts)) %>% 
   rename(., position = X)
 
 
 ts <- complete_ts %>%
-  mutate(., point = point) %>% 
+  mutate(., month = month_analysis) %>% 
   select(., 1, all_of(index_select), 5:ncol(.)) %>% 
   mutate(., motif = NA) %>% 
   mutate(., distance = NA) %>% 
   mutate(., length = NA) %>% 
   mutate(., reference = "0_ts") %>% 
   mutate(., id = 0) %>% 
-  rename(., Index = index_select)
+  rename(., Index = all_of(index_select))
 
-res <- read.table(getDataPath("Test", "Results", filename_results))
+res <- read.table(getDataPath(chapter, "STSC_Results_chp2", filename_results))
 
 res <- rename(res, FirstInstance_Start = V1,
               FirstInstance_End = V2,
@@ -252,7 +254,7 @@ for (row in 1:nrow(ts)) {
   ts[res_motif$Start[row]:res_motif$End[row], c("motif", "distance", "length")] <- res_motif[row, c("instance", "Distance", "Length")]
 }
 
-write.csv(ts, getDataPath("Test", "Results", paste(point, index, "motif.csv", sep = "_")))
+write.csv(ts, getDataPath(chapter, "Results", "3_ProcessingMotifs_cleaningup", paste(month_analysis, index, "motif.csv", sep = "_")))
 
 #Preparing for the plot
 
@@ -274,24 +276,24 @@ ggplot(plot_ts, aes(x = position, y = Index)) +
   #geom_line(data = plot_match, aes(x = position, y = Index, colour = number)) + 
   scale_linetype_manual(values = "dotted") +
   theme_classic() +
-  labs(title = paste(index, point, sep = " ")) +
+  labs(title = paste(index, month_analysis, sep = " ")) +
   theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), legend.position = "none") +
-  ggsave(getDataPath("Test", "Figures", paste(point, index, "ts_motifs.jpg", sep = "")))
+  ggsave(getDataPath(chapter, "Figures", "3_ProcessingMotifs_cleaningup", paste(month_analysis, index, "ts_motifs.jpg", sep = "")))
 
 #AcousticComplexity
 index <- "ACI"
 index_select <- "AcousticComplexity"
 
 
-filename_results <- paste("res", index, "_", point, "_432.txt", sep = "") 
-filename_complete_ts <- paste(point, data, ".csv", sep = "")
+filename_results <- paste("res", index, "_", month_analysis, "_432.txt", sep = "") 
+filename_complete_ts <- paste(month_analysis, data, ".csv", sep = "")
 
-complete_ts <- read.csv(getDataPath("Test", filename_complete_ts)) %>% 
+complete_ts <- read.csv(getDataPath(chapter, "AI_TS_monthly", filename_complete_ts)) %>% 
   rename(., position = X)
 
 
 ts <- complete_ts %>%
-  mutate(., point = point) %>% 
+  mutate(., month = month_analysis) %>% 
   select(., 1, all_of(index_select), 5:ncol(.)) %>% 
   mutate(., motif = NA) %>% 
   mutate(., distance = NA) %>% 
@@ -300,7 +302,7 @@ ts <- complete_ts %>%
   mutate(., id = 0) %>% 
   rename(., Index = index_select)
 
-res <- read.table(getDataPath("Results", data, point, filename_results))
+res <- read.table(getDataPath(chapter, "STSC_Results_chp2", filename_results))
 
 res <- rename(res, FirstInstance_Start = V1,
               FirstInstance_End = V2,
@@ -377,7 +379,7 @@ for (row in 1:nrow(ts)) {
   ts[res_motif$Start[row]:res_motif$End[row], c("motif", "distance", "length")] <- res_motif[row, c("instance", "Distance", "Length")]
 }
 
-write.csv(ts, getDataPath("Test", "Results", paste(point, index, "motif.csv", sep = "_")))
+write.csv(ts, getDataPath(chapter, "Results", "3_ProcessingMotifs_cleaningup", paste(month_analysis, index, "motif.csv", sep = "_")))
 
 #Preparing for the plot
 
@@ -398,7 +400,7 @@ ggplot(plot_ts, aes(x = position, y = Index)) +
   #geom_line(data = plot_match, aes(x = position, y = Index, colour = number)) + 
   scale_linetype_manual(values = "dotted") +
   theme_classic() +
-  labs(title = paste(index, point, sep = " ")) +
+  labs(title = paste(index, month_analysis, sep = " ")) +
   theme(legend.title = element_blank(), axis.title.x = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), legend.position = "none") +
-  ggsave(getDataPath("Test", "Figures", paste(point, index, "ts_motifs.jpg", sep = "")))
+  ggsave(getDataPath(chapter, "Figures", "3_ProcessingMotifs_cleaningup", paste(month_analysis, index, "ts_motifs.jpg", sep = "")))
 

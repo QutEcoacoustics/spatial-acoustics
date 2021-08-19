@@ -431,6 +431,9 @@ p_bestall <- add_trace(p_bestall, name = "Landscape attributes", mode = "text", 
 p_bestall <- layout(p_bestall, title = "Best model (Stress: 0.07, R2 = 0.494, p < 0.01)")
 orca(p_bestall, getDataPath(chapter, "Fig1", "NMDS_ALL_OPT", "plotly_all.png"))
 
+PERMANOVA <- adonis(df_newveg1[,c(78,97)]~df_newveg1$VegDescription2)
+
+plot(df_newveg1$VegDescription2, df_newveg1$SubcanopyHeight)
 
 #Birds:
 
