@@ -34,10 +34,12 @@ species.scores <- read.csv(getDataPath(chapter, "nmds_SpeciesScores.csv"))
 
 colours <- c( "#35978f", "#01665e", "#80cdc1", "#8c510a", "#bf812d")
 
+
+
 p_bestall <- plot_ly()
 p_bestall <- add_trace(p_bestall, name = data.scores$veg, type = "scatter", x = data.scores$NMDS1, y = data.scores$NMDS2, text = data.scores$point, colors = colours, color = data.scores$veg)
 p_bestall <- add_trace(p_bestall, name = "Landscape attributes", mode = "text", x = species.scores$NMDS1, y = species.scores$NMDS2, text = species.scores$landvar)
-p_bestall <- layout(p_bestall, title = "Best model (Stress: 0.07, R2 = 0.494, p < 0.01)")
+#p_bestall <- layout(p_bestall, title = "Best model (Stress: 0.07, R2 = 0.494, p < 0.01)")
 orca(p_bestall, getDataPath(chapter, "Fig1", "NMDS_ALL_OPT", "plotly_all.png"))
 
 
@@ -46,6 +48,8 @@ orca(p_bestall, getDataPath(chapter, "Fig1", "NMDS_ALL_OPT", "plotly_all.png"))
 
 data.scores <- read.csv(getDataPath(chapter, "nmds_sp_data.scores.csv"))
 species.scores <- read.csv(getDataPath(chapter, "nmds_sp_species.scores.csv"))
+
+#mutate(as.character(species.scores$landvar), "NS_DIST_AVG" == "Distance to nearest shrub")
 
 # Call:
 #   adonis(formula = total ~ merged$veg_description2) 
