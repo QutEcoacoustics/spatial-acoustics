@@ -10,21 +10,24 @@ getDataPath <- function (...) {
 
 chapter <- "Chapter1_FineScaleAcousticSurvey"
 
-table <- read.csv(getDataPath(chapter, "8.11.2021_birdsandinsectsabd.csv")) %>% 
+table <- read.csv(getDataPath(chapter, "13.01.2022_birdsandinsectsabd.csv")) %>% 
   filter(Common.name != "Bat - Austronomus") %>% 
-  filter(ï..environ != "all") %>% 
+  filter(environ != "all") %>% 
+  filter(environ != "") %>% 
   droplevels(.)
 
-count <- table %>% group_by(ï..environ) %>% 
-  count(Feeding.habits)
+count <- table %>% select(environ, percentage, Feeding.habits) %>% 
+  group_by(environ) %>%
+  group_by(Feeding.habits)
 
 ggplot() +
-  geom_col(data = table, aes(x = ï..environ, y = percentage, fill = Feeding.habits), position = "dodge") +
+  geom_col(data = table, aes(x = environ, y = percentage, fill = General_feeding), position = "dodge") +
   #annotate("text", label = count$n) +
-  theme_classic() +
-  scale_fill_manual(values = c("#6e016b", "#88419d", "#8c6bb1", "#3690c0", "#8c96c6", "#9ebcda", "#bfd3e6", "#e0ecf4"), labels = c("Birds - Carnivore", "Birds - Frugivore", "Birds - Granivore", "Insects", "Birds - Insectivore", "Birds - Insectivore/Carnivore", "Birds - Insectivore/Granivore", "Birds - Omnivore")) +
-  labs(x = "Vegetation", fill = "Legend", y = "Proportion") +
-  theme(axis.text.y = element_blank())
+  theme_dark() +
+  scale_fill_manual(values = c("#ffffe5", "#f7fcb9", "#d9f0a3", "#addd8e", "#78c679", "#4eb3d3", "#41ab5d", "#238443", "#006837", "#004529"), labels = c("Birds - Carnivore", "Birds - Carnivore+", "Birds - Frugivore", "Birds - Granivore", "Birds - Granivore+", "Insects", "Birds - Insectivore", "Birds - Insectivore+", "Birds - Nectarivore", "Birds - Omnivore")) +
+  labs(x = "Vegetation", fill = "Legend", y = "Percentage (%)") +
+  #theme(axis.text.y = element_blank())
+  ggsave(getDataPath(chapter, "Figures", "17.01.2022_feedinghabits_percentage.jpg"))
 
 land_var <- read.csv(getDataPath("Fieldwork_Bowra", "26.02.2021_dataSAVINDVI.csv"))
 
@@ -60,7 +63,7 @@ ggplot(land_var, aes(x = VegDescription2, y = SubcanopyHeight)) +
 ggplot(land_var, aes(x = VegDescription2, y = NS_DIST_AVG)) +
   geom_boxplot() +
   theme_classic() +
-  labs(x = "Vegetation Description", y = "Distance to Nearest Shrub") +
+  labs(x = "Vegetation Description", y = "Distance (m) to Nearest Shrub") +
   scale_x_discrete(limits = c("shrubland (2)", "open shrubland (3)", "sparse shrubland (4)", "woodlands (1)", "very sparse shrubland (5)"), labels =c("shrubland (2)" = "Shrubland", "open shrubland (3)" = "Open shrubland", "sparse shrubland (4)" = "Sparse shrubland", "woodlands (1)" = "Woodland", "very sparse shrubland (5)" = "Very sparse shrubland")) +
   theme(axis.text = element_text(size = 12)) +
   ggsave(getDataPath(chapter, "Figures", "22.10.2021_Boxplot_nearestshrub.jpg"))

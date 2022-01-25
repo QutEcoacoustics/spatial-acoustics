@@ -16,8 +16,8 @@ geo_id <- paste(site, point, sep = "_")
 # location2 <- "WA011"
 chapter <- "AIndices"
 
-dir.create(paste("D:", chapter, "motifs", site, sep = "/"))
-dir.create(paste("D:", chapter, "motifs", site, point, sep = "/"))
+dir.create(paste("C:", chapter, "motifs", site, sep = "/"))
+dir.create(paste("C:", chapter, "motifs", site, point, sep = "/"))
 
 data <- read.csv(getDataPath(chapter, "8_FeatureExtraction", "2_6_202008_wavelet.csv")) %>% 
   filter(class == "?") %>% 
@@ -76,13 +76,13 @@ flac2wave <- pivot_longer(info, cols = c(FileName_start, FileName_end), names_to
 #flac2wave <- flac2wave[1:7,]
 
 for (row in 1:nrow(flac2wave)) { 
-  if (file.exists(filename = paste("C:/Recs/2/6", "/", flac2wave$value[row], ".wav", sep = ""))) {
+  if (file.exists(filename = paste("T:/Marina/a2o/20210603_2/6/335", "/", flac2wave$value[row], ".wav", sep = ""))) {
       print(paste(flac2wave$value[row], "exists", sep = " ")) 
   } else {
       print(paste("transforming", flac2wave$value[row], sep = " "))
-      wav2flac(paste("C:/Recs/2/6", "/", flac2wave$value[2], ".flac", sep = ""), reverse = T, overwrite = F, path2exe = "C:/Users/n10393021/Downloads/flac-1.3.1pre1-win/flac-1.3.1pre1-win/win64") 
+      wav2flac(paste("T:/Marina/a2o/20210603_2/6/335", "/", flac2wave$date[row], "_AAO", "/", flac2wave$value[row], ".flac", sep = ""), reverse = T, overwrite = F, path2exe = "C:/Users/n10393021/Downloads/flac-1.3.1pre1-win/flac-1.3.1pre1-win/win64") 
       }
-  }
+}
 
 
 #   if (file.exists(filename = paste("T:/Marina/a2o/20210603_2/6/335/", paste(info$date[row], "_AAO", sep = ""), "/", info$FileName_start[row], ".wav", sep = ""))) {
@@ -114,7 +114,7 @@ for (row in 1:nrow(info)) {
   
   # wav2flac(paste("T:/Marina/a2o/20210603_2/6/335/", paste(info$date[row], "_AAO", sep = ""), "/", info$FileName_start[row], ".flac", sep = ""), reverse = T, overwrite = F)
   # wav2flac(paste("T:/Marina/a2o/20210603_2/6/335/", paste(info$date[row], "_AAO", sep = ""), "/", info$FileName_end[row], ".flac", sep = ""), reverse = T, overwrite = F)
-  
+      skip_to_next <- FALSE
   tryCatch({
     
     w1 <- readWave(paste("T:/Marina/a2o/20210603_2/6/335/", paste(info$date[row], "_AAO", sep = ""), "/", info$FileName_start[row], ".wav", sep = ""))

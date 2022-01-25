@@ -12,10 +12,16 @@ chapter <- "Chapter1_FineScaleAcousticSurvey"
 
 indices <- read.csv(getDataPath(chapter, "27.02.2021_CompleteData.csv"))
 
-# summary_stats <- group_by(indices, id) %>% 
-#   summarise(., mean = mean(index_value), sd = sd(index_value)) %>% 
-#   left_join(indices, ., by = "id") %>% 
-#   distinct(., id, .keep_all = T)
+# write.csv(land_var, getDataPath("8.11.2021_test.csv"))
+# 
+# df_newveg1 <- select(land_var, Point, NewVegDescription, VegDescription2) %>% 
+#   merge(., nmds_df, by.x = "Point", by.y = "point") %>% 
+#   mutate_at(c(75:82, 89, 91, 95, 97, 99:103), decostand, method = "range")
+
+ # summary_stats <- group_by(indices, id) %>% 
+ #  summarise(., mean = mean(index_value), sd = sd(index_value)) %>% 
+ #   left_join(indices, ., by = "id") %>% 
+ #  distinct(., id, .keep_all = T)
 
 summary_stats$LAT <- signif(summary_stats$LONG, 7)
 
@@ -37,7 +43,7 @@ cor <- cor(summary_stats[c(70:77, 84, 85, 87:99)])
 
 set.seed(123)
 
-ct <- ctree(class_model ~ CanopyCover + ShrubCover + CanopyHeight + SubcanopyHeight + Elevation + aug_ndvi_avg + NT_DIST_AVG + NS_DIST_AVG + GC_NG_AVG + GC_NF_AVG + GC_BS_AVG + GC_SH_AVG + DistWater, data=df_newveg1, controls = ctree_control(minsplit=30, minbucket=40, maxdepth=5))
+ct <- ctree(class_model ~ CanopyCover + ShrubCover + CanopyHeight + SubcanopyHeight + Elevation + aug_ndvi_avg + NT_DIST_AVG + NS_DIST_AVG + GC_NG_AVG + GC_NF_AVG + GC_BS_AVG + GC_SH_AVG + DistWater, data=indices, controls = ctree_control(minsplit=30, minbucket=40, maxdepth=5))
 
 print(ct)
 
@@ -45,17 +51,17 @@ pClassId <- predict(ct)
 
 # check predicted classes against original class labels
 
-table(summary_stats$mean, pClassId)
+table(indices$class_model, pClassId)
 
 #accuracy
 
-(sum(bio$bio==pClassId)) / nrow(bio)
+(sum(indices$class_model==pClassId)) / nrow(indices)
 
 
 
 plot(ct, ip_args=list(pval=FALSE), ep_args=list(digits=0))
 
-model_df <- select(df_newveg1, class_model, CanopyCover, ShrubCover , CanopyHeight , SubcanopyHeight , aug_ndvi_avg , NT_DIST_AVG , NS_DIST_AVG , GC_NG_AVG , GC_NF_AVG , GC_BS_AVG , GC_SH_AVG , DistWater, mean_temp)
+model_df <- select(indices, class_model, CanopyCover, ShrubCover , CanopyHeight , SubcanopyHeight , aug_ndvi_avg , NT_DIST_AVG , NS_DIST_AVG , GC_NG_AVG , GC_NF_AVG , GC_BS_AVG , GC_SH_AVG , DistWater, mean_temp)
 
 model_df$period <- as.factor(model_df$period)
 
@@ -73,7 +79,7 @@ train <- model_df[train_index,]%>%
 test <- model_df[test_index,]%>%
   droplevels(.)
 
-rf <- randomForest(class_model ~ CanopyCover + ShrubCover + CanopyHeight + SubcanopyHeight + aug_ndvi_avg + NT_DIST_AVG + NS_DIST_AVG + GC_NG_AVG + GC_NF_AVG + GC_BS_AVG + GC_SH_AVG + DistWater + mean_temp, data=model_df, importance = T, proximity = T, mtry = best.m)
+rf <- randomForest(class_model ~ CanopyCover + ShrubCover + CanopyHeight + SubcanopyHeight + aug_ndvi_avg + NT_DIST_AVG + NS_DIST_AVG + GC_NG_AVG + GC_NF_AVG + GC_BS_AVG + GC_SH_AVG + DistWater + mean_temp, data=model_df, importance = T, proximity = T)#, mtry = best.m)
 
 predict <- predict(rf, test)
 
@@ -91,7 +97,7 @@ importance <- as.data.frame(randomForest::importance(rf)) %>%
   #filter(., IncNodePurity > 2) %>%
   row.names(.)
 # 
-model_data <- select(summary_stats, mean, all_of(importance)) %>%
+model_data <- select(rf, mean, all_of(importance)) %>%
   droplevels(.)
 
 floor(sqrt(ncol(model_df) - 1))
