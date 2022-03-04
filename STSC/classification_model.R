@@ -13,7 +13,7 @@ library(wavelets)
 rm(list = ls())
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
+  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
 # #df with the motifs and filenames
@@ -80,6 +80,9 @@ labelled <- separate(labelled, col = id, into = c("point", "index", "number", "w
 
 
 labelled$index <- as.factor(labelled$index)
+labelled$component <- as.factor(labelled$component)
+labelled$bio <- as.factor(labelled$bio)
+labelled$classID <- as.factor(labelled$classID)
 
 labelled <- select(labelled, classID, everything(), -c(id, number, what, point))
 
@@ -121,7 +124,7 @@ test_index <- setdiff(1:nrow(df_bio), train_index)
 
 train <- df_bio[train_index,]%>% 
   droplevels(.$bio) %>% 
-  droplevels(.$index)
+  droplevels(.$index) 
 
 
 test <- df_bio[test_index,]%>% 
