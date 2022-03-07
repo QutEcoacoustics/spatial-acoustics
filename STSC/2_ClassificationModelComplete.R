@@ -14,31 +14,49 @@ folder <- "AIndices"
 step0 <- "9_MergedDF"
 step1 <- "10_RF"
 
-#1st round: one RF per point
-#First thing I'll clean up the file - removing some repeated and unnecessary columns + add the information on the site so next time I run I can just merge the files and do it. I'll create folders named first round; second round; third round inside a RF folder; I'll also add a spreadsheet with the RF results for each round so I can evaluate it later.
-round <- "Round1"
+#Round1----
+# one RF per point
+#First thing I'll clean up the file - removing some repeated and unnecessary columns + add the information on the site so next time I run I can just merge the files and do it. I'll create folders named first round; second round; third round inside a RF folder; I'll also add a spreadsheet with the RF results for each round so I can evaluate it later. This part doesn't need to repeat, round 2 should start from line 42 - some bits will be kind of repeated though
 
-list_files <- list.files(getDataPath(folder, step0), pattern = "chp", full.names = T)
+# round <- "Round1"
+# 
+# list_files <- list.files(getDataPath(folder, step0), pattern = "chp", full.names = T)
+# 
+# file <- list_files[1] 
+# 
+# labelled <- read.csv(file)
+# rownames(labelled) <- labelled$id
+# 
+# labelled <- select(labelled, everything(), -c(X, component, new_ResultMinute, FileName_start_hyper, FileName_end, files, id_path_hyper)) %>% 
+#   separate(id, into = c("site_1", "point_1", "month", "index", "number", "what"), sep = "_", remove = F) %>% 
+#   select(distance, reference, fid_what, site, date_time, everything(), -c(site_1, point_1, number, what))
+# 
+# labelled$index <- as.factor(labelled$index)
+# labelled$month <- as.factor(labelled$month)
+# labelled$time <- as.integer(labelled$time)
+# 
+# 
+# write.csv(labelled, getDataPath(folder, step1, basename(file)))
 
-file <- list_files[10] 
+#Round2----
 
-labelled <- read.csv(file)
+round <- "Round2"
+
+list_files <- list.files(getDataPath(folder, step1), pattern = "chp", full.names = T)
+
+#This is about making sure there is the same levels of class labels in the train set as the model data trying to increase accuracy
+
+
+file <- list_files[10]
+
+labelled <- read.csv(file) %>% 
+  select(everything(), -X)
 rownames(labelled) <- labelled$id
-
-labelled <- select(labelled, everything(), -c(X, component, new_ResultMinute, FileName_start_hyper, FileName_end, file, id_path_hyper)) %>% 
-  separate(id, into = c("site_1", "point_1", "month", "index", "number", "what"), sep = "_", remove = F) %>% 
-  select(distance, reference, fid_what, site, date_time, everything(), -c(site_1, point_1, number, what))
-
-labelled$index <- as.factor(labelled$index)
-labelled$month <- as.factor(labelled$month)
-labelled$time <- as.integer(labelled$time)
-
-
-write.csv(labelled, getDataPath(folder, step1, basename(file)))
   
 model_data <- filter(labelled, class != "NA") %>%
   select(., class, time, index, month, 22:ncol(labelled)) %>% 
   droplevels(.)
+
 
 train_index <- sample(1:nrow(model_data), 0.6 * nrow(model_data))
 train <- model_data[train_index,]%>%
@@ -150,6 +168,8 @@ final_df <- cbind(labelled, label_model) %>%
   select(., class, RFclass, everything())
 
 confusion_matrix <- table(final_df$class, final_df$RFclass)
+
+
 
 write.csv(final_df, getDataPath(folder, step1, round, paste(basename(file), "_class_RFlabels.csv", sep = "")), row.names = T)
 write.csv(confusion_matrix, getDataPath(folder, step1, round, paste(basename(file), "_ConfusionMatrix.csv", sep = "")), row.names = T)

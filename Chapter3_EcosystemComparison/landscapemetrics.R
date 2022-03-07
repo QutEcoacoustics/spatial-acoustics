@@ -12,7 +12,7 @@ getDataPath <- function (...) {
   return(file.path("D:/Chapter3_EcosystemComparison",  ...))
 }
 
-files <- list.files(getDataPath(), pattern = glob2rx("*raster_SERF*.tif"), recursive = T, full.names = T)
+files <- list.files(getDataPath(), pattern = glob2rx("*raster_*325.tif"), recursive = T, full.names = T)
 
 
 
