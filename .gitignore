@@ -35,3 +35,4 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 STSC/BOW-JZ1-WB28_20191014_180000.txt
+STSC/ICDM17-HIME/dataset/dataset/HumanY.txt
