@@ -112,7 +112,7 @@ data %>% filter(RFclass == "bird" | RFclass == "birdinsect" | RFclass == "insect
   theme(axis.text.y = element_blank()) +
   labs(fill = "Sound class", x = "time", y = "% sound class per period") +
   facet_wrap(~RFclass)+
- ggsave(getDataPath("Figures", "25.02.2022_biod_temp_daily_barplot.jpg"), height = 7, width = 15)
+ ggsave(getDataPath("Figures", "08.03.2022_biod_temp_daily_barplot.jpg"), height = 7, width = 15)
   #geom_smooth(aes(x))
   
 
@@ -131,7 +131,7 @@ data %>% filter(RFclass == "bird") %>%
   scale_colour_gradientn(colours = c("#ece7f2", "#a6bddb", "#2b8cbe"))+
   theme(axis.text.y = element_blank()) +
   labs(fill = "Sound class", x = "time", y = "% sound class per period") +
-  facet_wrap(~RFclass)+
+  facet_wrap(~RFclass) +
   ggsave(getDataPath("Figures", "25.02.2022_birdhum_daily_barplot.jpg"), height = 7, width = 10)
 
 #Humidity and birdinsect daily ----
