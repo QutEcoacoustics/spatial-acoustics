@@ -10,6 +10,8 @@ getDataPath <- function (...) {
 df <- read.csv(getDataPath("24.02.2022_completedf.csv"))
 
 df$RFclass <- as.character(df$RFclass)
+df$Date <- as.Date.character(df$Date) %>% 
+  sort()
 
 df$Recording_time <- factor(df$Recording_time, levels = c("0:00:00", "2:00:00", "4:00:00", "6:00:00", "8:00:00", "10:00:00", "12:00:00", "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00"))
 
@@ -53,28 +55,85 @@ ggplot(insects, aes(x = HumOut, y = n)) +
   geom_smooth( ) +
   ggsave(getDataPath("Figures", "08.03.2022_hourlyinsects_humidity.jpg"))
 
-df %>% mutate(RFclass = na_if(RFclass, "bird"),
-              RFclass = na_if(RFclass, "birdfroginsect"),
-              RFclass = na_if(RFclass, "birdinsect"),
-              RFclass = na_if(RFclass, "froginsect")) %>%
-ggplot(., aes(x = Recording_time)) +
-  geom_line(aes(y = mean_hum, colour = mean_hum)) +
-  geom_bar(aes(fill = RFclass), na.rm = T) +
-  facet_wrap(~month)
+# ggplot(insects, aes(x = Recording_time, na.rm = T)) +
+#   geom_bar(aes(fill = RFclass), na.rm = T) +
+#   geom_line(data = df, aes(y = mean_hum, colour = mean_hum)) +
+#   facet_wrap(~month) +
+#   ggsave(getDataPath("Figures", "09.03.2022_hourlyinsects_humidity.jpg"))
 
-ggplot(insects, aes(x = sort(Recording_time))) +
-  geom_bar() +
-  geom_line(aes(y= mean_hum, colour = mean_hum)) +
+ggplot(insects, aes(x = Recording_time, na.rm = T)) +
+  geom_bar(aes(fill = RFclass), na.rm = T) +
+  geom_line(data = df, aes(y = mean_hum, colour = mean_hum)) +
   #geom_point(aes(y = mean_hum, colour = mean_hum)) +
   #geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp)) +
-  scale_x_discrete(labels = c("0:00", "2:00", "4:00", "6:00", "8:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00")) +
-  facet_wrap(~month)
-  ggsave(getDataPath("Figures", "08.03.2022_hourlyinsects_humidity.jpg"))
+  scale_x_discrete(labels = c("00", "02", "04", "06", "08", "10", "12", "14", "16", "18", "20", "22")) +
+  scale_fill_manual(values = "#5ab4ac") +
+  scale_colour_gradientn(colours = c("#ece7f2", "#a6bddb", "#2b8cbe")) +
+  facet_wrap(~month) +
+  ggsave(getDataPath("Figures", "09.03.2022_hourlyinsects_humidity.jpg"), height = 9, width = 16)
+  
+# library(ggforce)
+# 
+# ggplot(insects, aes(x = Recording_time, na.rm = T)) +
+#   geom_bar(aes(fill = RFclass), na.rm = T) +
+#   geom_line(data = df, aes(y = moon_illu*100, colour = moon_illu)) +
+#   #geom_point(aes(y = mean_hum, colour = mean_hum)) +
+#   #geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp)) +
+#   scale_x_discrete(labels = c("00", "02", "04", "06", "08", "10", "12", "14", "16", "18", "20", "22")) +
+#   scale_colour_gradientn(colours = c("#969696", "#636363", "#252525"))+
+#   scale_fill_manual(values = "#5ab4ac")+
+#   facet_wrap_paginate(~Date, ncol = 6, nrow = 5, page = 5)
+#   ggsave(getDataPath("Figures", "09.03.2022_hourlyinsects_moon.jpg"), height = 9, width = 16)
+  
+  
+  ggplot(insects, aes(x = Recording_time, na.rm = T)) +
+    geom_bar(aes(fill = RFclass), na.rm = T) +
+    geom_line(data = df, aes(y = moon_illu*100, colour = moon_illu)) +
+    #geom_point(aes(y = mean_hum, colour = mean_hum)) +
+    #geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp)) +
+    scale_x_discrete(labels = c("00", "02", "04", "06", "08", "10", "12", "14", "16", "18", "20", "22")) +
+    scale_colour_gradientn(colours = c("#969696", "#636363", "#252525"))+
+    scale_fill_manual(values = "#5ab4ac")+
+    facet_wrap(~month) +
+  ggsave(getDataPath("Figures", "09.03.2022_hourlyinsects_moon.jpg"), height = 9, width = 16)
+
+
+ggplot(insects, aes(x=sort(Recording_time))) + 
+  geom_bar(aes(fill = RFclass))+
+  #geom_point(data = df, aes(y = moon_illu/50)) +
+  geom_line(data = df, aes(y = moon_illu*505, colour = moon_illu))+
+  #geom_errorbar(aes(ymin = mean_hum/15000 - se_hum/15000, ymax = mean_hum/15000 + se_hum/15000))+
+  #geom_smooth(data = df, aes(y = moon_illu/50), colour = "black") +
+  #scale_x_date(date_breaks = "1 month", labels = date_format("%b-%y")) +
+  scale_fill_manual(values = c("#e9a3c9"))+
+  scale_colour_gradientn(colours = c("#ece7f2", "#a6bddb", "#2b8cbe"))+
+  #theme(axis.text.y = element_blank()) +
+  labs(fill = "Sound class", x = "time", y = "% sound class per period") +
+  facet_wrap(~month) 
+  ggsave(getDataPath("Figures", "09.03.2022_insectmoon_daily.jpg"), height = 7, width = 10)
+  
+  
+  ggplot(df, aes(x=sort(Date))) + 
+    #geom_density(adjust = 1/2, aes(fill = RFclass))+
+    #geom_point(data = df, aes(y = moon_illu/50)) +
+    geom_line(aes(y = moon_illu/50, colour = moon_illu))+
+    #geom_errorbar(aes(ymin = mean_hum/15000 - se_hum/15000, ymax = mean_hum/15000 + se_hum/15000))+
+    #geom_smooth(aes(y = moon_illu), colour = "black") +
+    scale_x_date(date_breaks = "1 month", labels = date_format("%b-%y")) +
+    #scale_fill_manual(values = c("#e9a3c9"))+
+    scale_colour_gradientn(colours = c("#ece7f2", "#a6bddb", "#2b8cbe"))+
+    #theme(axis.text.y = element_blank()) +
+    #labs(fill = "Sound class", x = "time", y = "% sound class per period") +
+    facet_wrap(~month) 
+  ggsave(getDataPath("Figures", "09.03.2022_insectmoon_daily.jpg"), height = 7, width = 10)
 
 
 ggplot(insects, aes(x = moon_illu, y = n)) + 
   geom_smooth() +
   ggsave(getDataPath("Figures", "08.03.2022_hourlyinsects_moon.jpg"))
+
+
+
 
 #Hourly bird/Insects----
 birdinsects <- filter(df, RFclass == "birdinsect") %>% 
@@ -86,10 +145,39 @@ ggplot(birdinsects, aes(x = HumOut, y = n)) +
   geom_smooth() +
   ggsave(getDataPath("Figures", "08.03.2022_hourlybirdinsects_hum.jpg"))
 
+ggplot(birdinsects, aes(x = Recording_time, na.rm = T)) +
+  geom_bar(aes(fill = RFclass), na.rm = T) +
+  geom_line(data = df, aes(y = mean_hum/2, colour = mean_hum)) +
+  #geom_point(aes(y = mean_hum, colour = mean_hum)) +
+  #geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp)) +
+  scale_x_discrete(labels = c("00", "02", "04", "06", "08", "10", "12", "14", "16", "18", "20", "22")) +
+  scale_colour_gradientn(colours = c("#ece7f2", "#a6bddb", "#2b8cbe")) +
+  scale_fill_manual(values = "#e9a3c9") +
+  facet_wrap(~month) +
+  ggsave(getDataPath("Figures", "09.03.2022_hourlybirdinsects_humidity.jpg"), height = 9, width = 16)
+
 
 ggplot(birdinsects, aes(x = TempOut, y = n)) + 
   geom_smooth() +
   ggsave(getDataPath("Figures", "08.03.2022_hourlybirdinsects_temp.jpg"))
+
+ggplot(birdinsects, aes(x = Recording_time, na.rm = T)) +
+  geom_bar(aes(fill = RFclass), na.rm = T) +
+  geom_line(data = df, aes(y = mean_temp, colour = mean_temp)) +
+  #geom_point(aes(y = mean_hum, colour = mean_hum)) +
+  #geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp)) +
+  scale_x_discrete(labels = c("00", "02", "04", "06", "08", "10", "12", "14", "16", "18", "20", "22")) +
+  scale_colour_gradientn(colours = c("#fdcc8a", "#fc8d59", "#d7301f"))+
+  scale_fill_manual(values = "#e9a3c9") +
+  facet_wrap(~month) +
+  ggsave(getDataPath("Figures", "09.03.2022_hourlybirdinsects_temp.jpg"), height = 9, width = 16)
+  
+  #bird #c51b7d
+  #birdinsect #e9a3c9
+  #insect #5ab4ac
+  #froginsect #4d9221
+  #birdfroginsect ##9ebcda
+  #temp #feb24c
 
 
 #Hourly Bird----
@@ -98,10 +186,32 @@ bird <- filter(df, RFclass == "bird") %>%
   mutate(n = n()) %>% 
   droplevels()
 
+ggplot(bird, aes(x = Recording_time, na.rm = T)) +
+  geom_bar(aes(fill = RFclass), na.rm = T) +
+  geom_line(data = df, aes(y = mean_hum, colour = mean_hum)) +
+  #geom_point(aes(y = mean_hum, colour = mean_hum)) +
+  #geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp)) +
+  scale_x_discrete(labels = c("00", "02", "04", "06", "08", "10", "12", "14", "16", "18", "20", "22")) +
+  scale_colour_gradientn(colours = c("#ece7f2", "#a6bddb", "#2b8cbe")) +
+  scale_fill_manual(values = "#c51b7d") +
+  facet_wrap(~month) +
+  ggsave(getDataPath("Figures", "09.03.2022_hourlybird_humidity.jpg"), height = 9, width = 16)
+
 ggplot(bird, aes(x = HumOut, y = n)) + 
   geom_smooth() +
   ggsave(getDataPath("Figures", "08.03.2022_hourlybirds_hum.jpg"))
 
+
+ggplot(bird, aes(x = Recording_time, na.rm = T)) +
+  geom_bar(aes(fill = RFclass), na.rm = T) +
+  geom_line(data = df, aes(y = mean_temp, colour = mean_temp)) +
+  #geom_point(aes(y = mean_hum, colour = mean_hum)) +
+  #geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp)) +
+  scale_x_discrete(labels = c("00", "02", "04", "06", "08", "10", "12", "14", "16", "18", "20", "22")) +
+  scale_colour_gradientn(colours = c("#fdcc8a", "#fc8d59", "#d7301f"))+
+  scale_fill_manual(values = "#c51b7d") +
+  facet_wrap(~month) +
+  ggsave(getDataPath("Figures", "09.03.2022_hourlybird_temp.jpg"), height = 9, width = 16)
 
 ggplot(bird, aes(x = TempOut, y = n)) + 
   geom_smooth() +
@@ -118,6 +228,26 @@ insects_monthly <- filter(df, RFclass == "insect") %>%
 ggplot(insects_monthly, aes(x = NDVI_MEAN, y = n)) + 
   geom_smooth() +
   ggsave(getDataPath("Figures", "08.03.2022_monthlyinsects_ndvi.jpg"))
+
+insects_monthly$Date <- as.Date.character(insects_monthly$Date)
+
+ggplot(insects_monthly, aes(x = sort(Date), na.rm = T)) +
+  geom_bar(aes(fill = RFclass), na.rm = T) +
+  geom_line(aes(y = NDVI_MEAN, colour = NDVI_MEAN)) +
+  scale_x_date(date_breaks = "1 month", labels = date_format("%b-%y")) +
+  #geom_point(aes(y = mean_hum, colour = mean_hum)) +
+  #geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp)) +
+  #scale_x_discrete(labels = c("00", "02", "04", "06", "08", "10", "12", "14", "16", "18", "20", "22")) +
+  #scale_colour_gradientn(colours = c("#fdcc8a", "#fc8d59", "#d7301f"))+
+  scale_fill_manual(values = "#5ab4ac") +
+  facet_wrap(~month)
+
+#bird #c51b7d
+#birdinsect #e9a3c9
+#insect #5ab4ac
+#froginsect #4d9221
+#birdfroginsect ##9ebcda
+#temp #feb24c
 
 
 ggplot(insects_monthly, aes(x = TempOut, y = n)) + 
