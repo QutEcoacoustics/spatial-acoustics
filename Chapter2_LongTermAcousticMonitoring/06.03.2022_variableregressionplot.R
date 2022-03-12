@@ -222,10 +222,12 @@ ggplot(bird, aes(x = TempOut, y = n)) +
 insects_monthly <- filter(df, RFclass == "insect") %>% 
   filter(month != 202001 & month != 202002) %>% 
   group_by(month) %>% 
-  mutate(n = n())  %>% 
+  mutate(n = n(),
+         mean_ndvi = mean(NDVI_MEAN),
+         mean_ebi = mean(EBI_RANGE))  %>% 
   droplevels()
 
-ggplot(insects_monthly, aes(x = NDVI_MEAN, y = n)) + 
+ggplot(insects_monthly, aes(x = mean_ndvi, y = n)) + 
   geom_smooth() +
   ggsave(getDataPath("Figures", "08.03.2022_monthlyinsects_ndvi.jpg"))
 
@@ -233,7 +235,7 @@ insects_monthly$Date <- as.Date.character(insects_monthly$Date)
 
 ggplot(insects_monthly, aes(x = sort(Date), na.rm = T)) +
   geom_bar(aes(fill = RFclass), na.rm = T) +
-  geom_line(aes(y = NDVI_MEAN, colour = NDVI_MEAN)) +
+  geom_line(aes(y = mean_ndvi, colour = mean_ndvi)) +
   scale_x_date(date_breaks = "1 month", labels = date_format("%b-%y")) +
   #geom_point(aes(y = mean_hum, colour = mean_hum)) +
   #geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp)) +
@@ -248,7 +250,7 @@ ggplot(insects_monthly, aes(x = sort(Date), na.rm = T)) +
 #froginsect #4d9221
 #birdfroginsect ##9ebcda
 #temp #feb24c
-
+library(scales)
 
 ggplot(insects_monthly, aes(x = TempOut, y = n)) + 
   geom_smooth() +

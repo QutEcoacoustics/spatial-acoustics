@@ -66,6 +66,8 @@ period_test <- "dawn"
 data <- filter(plot_df, period == period_test) %>% 
   select(., RFclass, general_category, Date, week_day, moon_illu, TempOut, HumOut, Rain, month, anthrophony, geophony, Recording_time, time2) %>% 
   na.exclude() %>% 
+  group_by(month) %>% 
+  mutate(n = paste("n=", n(), sep = "")) %>%
   droplevels()
 
 ### Daily model ----
@@ -103,12 +105,31 @@ importance
 
 ## Monthly data ----
 
+labels <- select(data, month, n) %>% 
+  distinct() %>% 
+  .[order(.$month),] %>% 
+  mutate(month = case_when(month == "202001" ~ "Jan",
+                           month == "202002" ~ "Fev",
+                           month == "202003" ~ "Mar",
+                           month == "202004" ~ "Apr",
+                           month == "202005" ~ "May",
+                           month == "202006" ~ "Jun",
+                           month == "202007" ~ "Jul",
+                           month == "202008" ~ "Aug",
+                           month == "202009" ~ "Sep",
+                           month == "202010" ~ "Oct",
+                           month == "202011" ~ "Nov",
+                           month == "202012" ~ "Feb")) %>% 
+  mutate(labels = paste(month, n, sep = " "))
+
 ### Rose plot - monthly biod
 ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
-  geom_bar(aes(y = (..count..)/sum(..count..))) +
+  geom_bar(aes(y = (..count..))) +
   scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac", "froginsect" = "#4d9221", "birdfroginsect" = "#9ebcda")) +
-  labs(fill = "Sound class", x = "Month", y = "% sound class per period/month") +
+  labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = paste("Recording hours (3): ", levels(data$Recording_time)[1], ", ", levels(data$Recording_time)[2], ", ", levels(data$Recording_time)[3], sep = "")) +
+  scale_x_discrete(labels = labels$labels) +
   coord_polar() +
+  theme_light() +
   ggsave(getDataPath("Figures", paste("25.02.2022_RosePlot_", period_test, ".jpg", sep = "")))
 
 

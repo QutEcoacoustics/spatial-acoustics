@@ -33,6 +33,8 @@ plot_df <- filter(df, general_category == "anthrophony/biophony" | general_categ
                                 RFclass == "geoinsect" ~ "insect",
                                 TRUE ~ as.character(RFclass)
   )) %>% 
+  group_by(month) %>% 
+  mutate(n = paste("n=", n(), sep = "")) %>%
   droplevels(.)
 
 plot_df$RFclass <- as.factor(plot_df$RFclass)
@@ -48,16 +50,63 @@ plot_df$Recording_time <- factor(plot_df$Recording_time, levels = c("0:00:00", "
 #froginsect #4d9221
 #birdfroginsect ##9ebcda
 
+library(cowplot)
+
 # Hourly plots
 
-ggplot(data = plot_df, aes(x = as.factor(Recording_time), fill = RFclass)) + 
-  geom_bar(aes(y = (..count..)/sum(..count..))) +
-  scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
-  labs(fill = "Sound class", x = "Time", y = "% sound class") +
-  coord_polar() +
-  facet_wrap(.~month) +
-  ggsave(getDataPath("Figures", "25.02.2022_RosePlot_hourly.jpg"), width = 15, height = 9)
 
+ggplot(data = plot_df, aes(x = as.factor(Recording_time), fill = RFclass)) + 
+  geom_bar(aes(y = (..count..))) +
+  scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
+  labs(fill = "Sound class", x = "Time", y = "Sound class count") +
+  scale_x_discrete(labels = c("0:00:00" = "0:00", "2:00:00" = "2:00", "4:00:00" = "4:00", "6:00:00" = "6:00", "8:00:00" = "8:00", "10:00:00" = "10:00", "12:00:00" = "12:00", "14:00:00" = "14:00", "16:00:00" = "16:00", "18:00:00" = "18:00", "20:00:00" = "20:00", "22:00:00" = "22:00")) +
+  theme_light() +
+  coord_polar() +
+  facet_wrap(.~month + n) +
+  ggsave(getDataPath("Figures", "12.03.2022_RosePlot_hourly.jpg"), width = 15, height = 9)
+  
+#Anthrophony plot----
+
+plot_df %>% filter(anthrophony == "yes") %>% 
+  group_by(month) %>% 
+  mutate(n = paste("n=", n(), sep = "")) %>% 
+ggplot(data = ., aes(x = as.factor(Recording_time), fill = anthrophony)) + 
+  geom_bar(aes(y = (..count..))) +
+  #scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
+  labs(fill = "Anthrophony", x = "Time", y = "Anthrophony count") +
+  scale_x_discrete(labels = c("0:00:00" = "0:00", "2:00:00" = "2:00", "4:00:00" = "4:00", "6:00:00" = "6:00", "8:00:00" = "8:00", "10:00:00" = "10:00", "12:00:00" = "12:00", "14:00:00" = "14:00", "16:00:00" = "16:00", "18:00:00" = "18:00", "20:00:00" = "20:00", "22:00:00" = "22:00")) +
+  theme_light() +
+  coord_polar() +
+  facet_wrap(.~month + n) +
+  ggsave(getDataPath("Figures", "12.03.2022_anthrophony_RosePlot_hourly.jpg"), width = 15, height = 9)
+  
+plot_df %>% filter(anthrophony == "yes") %>% 
+    group_by(month) %>% 
+    mutate(n = paste("n=", n(), sep = "")) %>% 
+    ggplot(data = ., aes(x = as.factor(week_day), fill = anthrophony)) + 
+    geom_bar(aes(y = (..count..))) +
+    #scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
+    labs(fill = "Anthrophony", x = "Day of week", y = "Anthrophony count") +
+    scale_x_discrete(labels = c("Monday" = "Mon", "Tuesday" = "Tue", "Wednesday" = "Wed", "Thursday" = "Thu", "Friday" = "Fri", "Saturday" = "Sat", "Sunday" = "Sun")) +
+  theme_light() +
+    coord_polar() +
+    facet_wrap(.~month + n) +
+  ggsave(getDataPath("Figures", "12.03.2022_anthrophony_RosePlot_week.jpg"), width = 15, height = 9)
+
+#Geophony plot ----
+
+plot_df %>% filter(geophony == "yes") %>% 
+  group_by(month) %>% 
+  mutate(n = paste("n=", n(), sep = "")) %>% 
+  ggplot(data = ., aes(x = as.factor(Recording_time), fill = geophony)) + 
+  geom_bar(aes(y = (..count..))) +
+  scale_fill_manual(values = c("#756bb1")) +
+  labs(fill = "Geophony", x = "Time", y = "Geophony count") +
+  scale_x_discrete(labels = c("0:00:00" = "0:00", "2:00:00" = "2:00", "4:00:00" = "4:00", "6:00:00" = "6:00", "8:00:00" = "8:00", "10:00:00" = "10:00", "12:00:00" = "12:00", "14:00:00" = "14:00", "16:00:00" = "16:00", "18:00:00" = "18:00", "20:00:00" = "20:00", "22:00:00" = "22:00")) +
+  theme_light() +
+  coord_polar() +
+  facet_wrap(.~month + n) +
+  ggsave(getDataPath("Figures", "12.03.2022_geophony_RosePlot_hourly.jpg"), width = 15, height = 9)
 
 
 
@@ -67,6 +116,19 @@ data <- #filter(, period == period_test) %>%
   select(plot_df, RFclass, period, general_category, Date, week_day, moon_illu, TempOut, HumOut, Rain, month, anthrophony, geophony, Recording_time, time2) %>% 
   na.exclude() %>% 
   droplevels()
+
+n <- plot_df %>% group_by(month, RFclass) %>% 
+  summarise(n = n()) %>% 
+  write.csv(getDataPath("summary_classespermonth.csv"), row.names = F)
+
+plot_df %>% filter(RFclass == "insect" | RFclass == "bird") %>% 
+ggplot(data = ., aes(x = as.factor(month))) +
+  geom_bar(aes(fill = RFclass)) +
+  geom_violin(aes(y = NDVI_MEAN*1000, fill = "NDVI_MEAN")) +
+  #geom_violin(aes(y = EBI_RANGE, fill = "EBI_RANGE")) +
+  facet_wrap(.~RFclass)
+  
+  
 
 ### Daily model ----
 
