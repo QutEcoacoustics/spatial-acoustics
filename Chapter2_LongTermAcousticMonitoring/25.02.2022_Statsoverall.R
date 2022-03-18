@@ -34,7 +34,10 @@ plot_df <- filter(df, general_category == "anthrophony/biophony" | general_categ
                                 TRUE ~ as.character(RFclass)
   )) %>% 
   group_by(month) %>% 
-  mutate(n = paste("n=", n(), sep = "")) %>%
+  mutate(n_motif = n()) %>%
+  mutate(avg_motif = paste("Motif/day=", format(round(n_motif/n_days, 0)))) %>% 
+  mutate(n_motif_char = paste("n motifs=", n_motif, sep = "")) %>%
+  mutate(n_days_char = paste("Recorded days=", n_days, sep = "")) %>%
   droplevels(.)
 
 plot_df$RFclass <- as.factor(plot_df$RFclass)
@@ -53,60 +56,81 @@ plot_df$Recording_time <- factor(plot_df$Recording_time, levels = c("0:00:00", "
 library(cowplot)
 
 # Hourly plots
-
+plot_df <- plot_df[order(plot_df$month),] %>% 
+  mutate(month_char = as.factor(case_when(month == "202001" ~ "January",
+                           month == "202002" ~ "February",
+                           month == "202003" ~ "March",
+                           month == "202004" ~ "April",
+                           month == "202005" ~ "May",
+                           month == "202006" ~ "June",
+                           month == "202007" ~ "July",
+                           month == "202008" ~ "August",
+                           month == "202009" ~ "September",
+                           month == "202010" ~ "October",
+                           month == "202011" ~ "November",
+                           month == "202012" ~ "December")))
 
 ggplot(data = plot_df, aes(x = as.factor(Recording_time), fill = RFclass)) + 
   geom_bar(aes(y = (..count..))) +
   scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
   labs(fill = "Sound class", x = "Time", y = "Sound class count") +
   scale_x_discrete(labels = c("0:00:00" = "0:00", "2:00:00" = "2:00", "4:00:00" = "4:00", "6:00:00" = "6:00", "8:00:00" = "8:00", "10:00:00" = "10:00", "12:00:00" = "12:00", "14:00:00" = "14:00", "16:00:00" = "16:00", "18:00:00" = "18:00", "20:00:00" = "20:00", "22:00:00" = "22:00")) +
-  theme_light() +
+  theme_light(base_size = 13) +
   coord_polar() +
-  facet_wrap(.~month + n) +
-  ggsave(getDataPath("Figures", "12.03.2022_RosePlot_hourly.jpg"), width = 15, height = 9)
+  facet_wrap(.~month_char + n_motif_char + n_days_char + avg_motif) +
+  ggsave(getDataPath("Figures", "GoodFigs", "15.03.2022_RosePlot_hourly.jpg"), width = 16, height = 12)
   
 #Anthrophony plot----
 
 plot_df %>% filter(anthrophony == "yes") %>% 
   group_by(month) %>% 
-  mutate(n = paste("n=", n(), sep = "")) %>% 
+  mutate(n_anthro = n()) %>%
+  mutate(avg_motif_anthro = paste("Motif/day = ", format(round(n_anthro/n_days, 0)), sep = "")) %>% 
+  mutate(n_anthro_char = paste("n motifs=", n_anthro, sep = "")) %>%
 ggplot(data = ., aes(x = as.factor(Recording_time), fill = anthrophony)) + 
   geom_bar(aes(y = (..count..))) +
   #scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
   labs(fill = "Anthrophony", x = "Time", y = "Anthrophony count") +
   scale_x_discrete(labels = c("0:00:00" = "0:00", "2:00:00" = "2:00", "4:00:00" = "4:00", "6:00:00" = "6:00", "8:00:00" = "8:00", "10:00:00" = "10:00", "12:00:00" = "12:00", "14:00:00" = "14:00", "16:00:00" = "16:00", "18:00:00" = "18:00", "20:00:00" = "20:00", "22:00:00" = "22:00")) +
-  theme_light() +
+  theme_light(base_size = 13) +
+  theme(legend.position = "none")+
   coord_polar() +
-  facet_wrap(.~month + n) +
-  ggsave(getDataPath("Figures", "12.03.2022_anthrophony_RosePlot_hourly.jpg"), width = 15, height = 9)
+  facet_wrap(.~month_char + n_anthro_char + n_days_char + avg_motif_anthro) +
+  ggsave(getDataPath("Figures", "GoodFigs", "15.03.2022_anthrophony_RosePlot_hourly.jpg"), width = 14, height = 12)
   
 plot_df %>% filter(anthrophony == "yes") %>% 
     group_by(month) %>% 
-    mutate(n = paste("n=", n(), sep = "")) %>% 
+  mutate(n_anthro = n()) %>%
+  mutate(avg_motif_anthro = paste("Motif/day = ", format(round(n_anthro/n_days, 0)), sep = "")) %>% 
+  mutate(n_anthro_char = paste("n motifs=", n_anthro, sep = "")) %>%
     ggplot(data = ., aes(x = as.factor(week_day), fill = anthrophony)) + 
     geom_bar(aes(y = (..count..))) +
     #scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
     labs(fill = "Anthrophony", x = "Day of week", y = "Anthrophony count") +
     scale_x_discrete(labels = c("Monday" = "Mon", "Tuesday" = "Tue", "Wednesday" = "Wed", "Thursday" = "Thu", "Friday" = "Fri", "Saturday" = "Sat", "Sunday" = "Sun")) +
-  theme_light() +
+  theme_light(base_size = 13) +
+  theme(legend.position = "none")+
     coord_polar() +
-    facet_wrap(.~month + n) +
-  ggsave(getDataPath("Figures", "12.03.2022_anthrophony_RosePlot_week.jpg"), width = 15, height = 9)
+    facet_wrap(.~month_char + n_anthro_char + n_days_char + avg_motif_anthro) +
+  ggsave(getDataPath("Figures", "GoodFigs", "15.03.2022_anthrophony_RosePlot_week.jpg"), width = 14, height = 12)
 
 #Geophony plot ----
 
 plot_df %>% filter(geophony == "yes") %>% 
   group_by(month) %>% 
-  mutate(n = paste("n=", n(), sep = "")) %>% 
+  mutate(n_geo = n()) %>%
+  mutate(avg_motif_geo = paste("Motif/day = ", format(round(n_geo/n_days, 2)), sep = "")) %>% 
+  mutate(n_geo_char = paste("n motifs=", n_geo, sep = "")) %>%
   ggplot(data = ., aes(x = as.factor(Recording_time), fill = geophony)) + 
   geom_bar(aes(y = (..count..))) +
   scale_fill_manual(values = c("#756bb1")) +
   labs(fill = "Geophony", x = "Time", y = "Geophony count") +
   scale_x_discrete(labels = c("0:00:00" = "0:00", "2:00:00" = "2:00", "4:00:00" = "4:00", "6:00:00" = "6:00", "8:00:00" = "8:00", "10:00:00" = "10:00", "12:00:00" = "12:00", "14:00:00" = "14:00", "16:00:00" = "16:00", "18:00:00" = "18:00", "20:00:00" = "20:00", "22:00:00" = "22:00")) +
-  theme_light() +
+  theme_light(base_size = 13) +
+  theme(legend.position = "none") +
   coord_polar() +
-  facet_wrap(.~month + n) +
-  ggsave(getDataPath("Figures", "12.03.2022_geophony_RosePlot_hourly.jpg"), width = 15, height = 9)
+  facet_wrap(.~month_char + n_geo_char + n_days_char + avg_motif_geo) +
+  ggsave(getDataPath("Figures", "GoodFigs", "15.03.2022_geophony_RosePlot_hourly.jpg"), width = 14, height = 12)
 
 
 

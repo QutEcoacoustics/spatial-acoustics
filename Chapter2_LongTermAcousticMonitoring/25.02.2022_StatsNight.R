@@ -64,10 +64,10 @@ period_test <- "night"
 ### Daily data----
 
 data <- filter(plot_df, period == period_test) %>% 
-  select(., RFclass, general_category, Date, week_day, moon_illu, TempOut, HumOut, Rain, month, anthrophony, geophony, Recording_time, time2) %>% 
+  select(., RFclass, general_category, Date, week_day, moon_illu, TempOut, HumOut, Rain, month, anthrophony, geophony, Recording_time, time2, n_days) %>% 
   na.exclude() %>% 
   group_by(month) %>% 
-  mutate(n = paste("n=", n(), sep = "")) %>%
+  mutate(n_motif =  n()) %>%
   droplevels()
 
 ### Daily model ----
@@ -105,11 +105,11 @@ importance
 
 ## Monthly data ----
 
-labels <- select(data, month, n) %>% 
+labels <- select(data, month, n_motif, n_days) %>% 
   distinct() %>% 
   .[order(.$month),] %>% 
   mutate(month = case_when(month == "202001" ~ "Jan",
-                           month == "202002" ~ "Fev",
+                           month == "202002" ~ "Feb",
                            month == "202003" ~ "Mar",
                            month == "202004" ~ "Apr",
                            month == "202005" ~ "May",
@@ -119,12 +119,9 @@ labels <- select(data, month, n) %>%
                            month == "202009" ~ "Sep",
                            month == "202010" ~ "Oct",
                            month == "202011" ~ "Nov",
-                           month == "202012" ~ "Feb")) %>% 
-  mutate(labels = paste(month, n, sep = " "))
-
-
-
-  
+                           month == "202012" ~ "Dec")) %>% 
+  mutate(average_motif = paste("Motif/day = ", format(round(n_motif/n_days, 2)), sep = "")) %>% 
+  mutate(labels = paste(month, average_motif, sep = "\n"))
 
 ### Rose plot - monthly biod
 ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
@@ -134,7 +131,8 @@ ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) +
   scale_x_discrete(labels = labels$labels) +
   coord_polar() +
   theme_light() +
-  ggsave(getDataPath("Figures", paste("25.02.2022_RosePlot_", period_test, ".jpg", sep = "")))
+  theme(plot.margin = unit(c(0.009, 0.0009, 0.009, 0.009), "cm")) +
+  ggsave(getDataPath("Figures", "GoodFigs", paste("15.03.2022_RosePlot_", period_test, ".jpg", sep = "")), width = 12, height = 9)
   
 
 
