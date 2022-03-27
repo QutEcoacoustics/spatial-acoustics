@@ -45,7 +45,7 @@ plot_df$period <- as.factor(plot_df$period)
 plot_df$Date <- as.Date.character(plot_df$Date) %>% 
   sort()
 
-plot_df$Recording_time <- as.character(plot_df$Recording_time, levels = c("0:00:00", "2:00:00", "4:00:00", "6:00:00", "8:00:00", "10:00:00", "12:00:00", "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00")) 
+plot_df$Recording_time <- factor(plot_df$Recording_time, levels = c("0:00:00", "2:00:00", "4:00:00", "6:00:00", "8:00:00", "10:00:00", "12:00:00", "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00")) 
   
 plot_df <- mutate(plot_df, Recording_time = case_when(Recording_time == "0:00:00" ~ "24:00:00",
                                                                             TRUE ~ Recording_time))
@@ -157,39 +157,64 @@ plot_monthly_insectbird %>% filter(RFclass == "birdinsect") %>%
 
 
 
-plot_monthly <- select(plot_df, month, RFclass, moon_illu, HumOut, TempOut, date_time3) %>% 
+plot_monthly <- select(plot_df, month, RFclass, moon_illu, HumOut, TempOut, Recording_time) %>% 
   na.exclude(.) %>% 
-  group_by(., month, date_time3, RFclass) %>% 
+  group_by(., month, Recording_time, RFclass) %>% 
   summarise(count_class = n(),
             moon = mean(moon_illu),
             Humidity = mean(HumOut),
             Temp = mean(TempOut)) %>% 
   pivot_longer(., cols = c(moon, count_class, Humidity, Temp), values_to = "mean", names_to = "variables") %>% 
-  mutate(scaled = scale(mean)) %>% 
-  mutate(., month = case_when(month == as.character("202001") ~ as.character("January"),
-    month == as.character("202002") ~ as.character("February"),
-    month == as.character("202003") ~ as.character("March"),
-    month == as.character("202004") ~ as.character("April"),
-    month == as.character("202005") ~ as.character("May"),
-    month == as.character("202006") ~ as.character("June"),
-    month == as.character("202007") ~ as.character("July"),
-    month == as.character("202008") ~ as.character("August"),
-    month == as.character("202009") ~ as.character("September"),
-    month == as.character("202010") ~ as.character("October"),
-    month == as.character("202011") ~ as.character("November"),
-    month == as.character("202012") ~ as.character("December"), 
-    TRUE ~ as.character(month)))
+mutate(scaled = scale(mean))
+  # mutate(., month = case_when(month == as.character("202001") ~ as.character("January"),
+  #   month == as.character("202002") ~ as.character("February"),
+  #   month == as.character("202003") ~ as.character("March"),
+  #   month == as.character("202004") ~ as.character("April"),
+  #   month == as.character("202005") ~ as.character("May"),
+  #   month == as.character("202006") ~ as.character("June"),
+  #   month == as.character("202007") ~ as.character("July"),
+  #   month == as.character("202008") ~ as.character("August"),
+  #   month == as.character("202009") ~ as.character("September"),
+  #   month == as.character("202010") ~ as.character("October"),
+  #   month == as.character("202011") ~ as.character("November"),
+  #   month == as.character("202012") ~ as.character("December"), 
+  #   TRUE ~ as.character(month))) #%>% 
+  #mutate(date_time3 = as.POSIXct(hms::parse_hms(date_time3)))
 
 #labels = c("0:00:00" = "0:00", "2:00:00" = "2:00", "4:00:00" = "4:00", "6:00:00" = "6:00", "8:00:00" = "8:00", "10:00:00" = "10:00", "12:00:00" = "12:00", "14:00:00" = "14:00", "16:00:00" = "16:00", "18:00:00" = "18:00", "20:00:00" = "20:00", "22:00:00" = "22:00"
 
-plot_monthly %>% filter(RFclass == "bird" & variables != "moon") %>% 
+# ggplot(data = plot_df, aes(x = as.factor(Recording_time), fill = RFclass)) + 
+#   geom_bar(aes(y = (..count..)/sum(..count..))) +
+#   scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
+#   labs(fill = "Sound class", x = "Time", y = "% sound class") +
+#   coord_polar() +
+#   facet_wrap(.~month)
+
+# labels <- select(plot_df, month) %>% 
+#   distinct() %>% 
+#   .[order(.$month),] %>% 
+#   mutate(month = case_when(month == "202001" ~ "Jan",
+#                            month == "202002" ~ "Feb",
+#                            month == "202003" ~ "Mar",
+#                            month == "202004" ~ "Apr",
+#                            month == "202005" ~ "May",
+#                            month == "202006" ~ "Jun",
+#                            month == "202007" ~ "Jul",
+#                            month == "202008" ~ "Aug",
+#                            month == "202009" ~ "Sep",
+#                            month == "202010" ~ "Oct",
+#                            month == "202011" ~ "Nov",
+#                            month == "202012" ~ "Dec"))
+
+plot_monthly %>% filter(RFclass == "bird" & variables != "moon") %>%
   droplevels() %>%
   na.exclude() %>% 
-ggplot(., aes(x = date_time3, y = scaled, colour = variables)) + 
-  geom_smooth() +
+ggplot(., aes(x = Recording_time, y = mean, colour = variables, group = variables)) + 
+  geom_point() +
+  geom_line() +
   #scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
   #labs(fill = "Sound class", x = "Time", y = "Sound class count") +
-  scale_x_datetime() +
+  #scale_x_datetime(date_labels = "%H:%M:%S", breaks = date_breaks("24 hour")) +
   theme_light() +
   facet_wrap(.~month)
   ggsave(getDataPath("Figures", "GoodFigs", "15.03.2022_RosePlot_hourly.jpg"), width = 16, height = 12)
