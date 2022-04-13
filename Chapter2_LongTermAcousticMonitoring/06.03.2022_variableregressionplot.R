@@ -18,6 +18,9 @@ df$Date <- as.Date.character(df$Date) %>%
 
 df$Recording_time <- factor(df$Recording_time, levels = c("0:00:00", "2:00:00", "4:00:00", "6:00:00", "8:00:00", "10:00:00", "12:00:00", "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00"))
 
+df_2 <- group_by(df, general_category) %>% 
+  summarise(n())
+
 df <- filter(df, general_category == "anthrophony/biophony" | general_category == "anthrophony/biophony/geophony" | general_category == "biophony" | general_category == "biophony/geophony") %>% 
   mutate(., general_category = "biophony") %>% 
   mutate(., moon_illu = case_when(period == "day" ~ 0,
@@ -54,6 +57,7 @@ df$period <- as.factor(df$period)
 df$Date <- as.Date.character(df$Date) %>% 
   sort()
 
+df$Recording_time <- factor(plot_df$Recording_time, levels = c("0:00:00", "2:00:00", "4:00:00", "6:00:00", "8:00:00", "10:00:00", "12:00:00", "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00"))
 
 
 plot_monthly <- select(df, month, RFclass, NDVI_MEAN, HumOut, TempOut) %>% 
@@ -80,6 +84,45 @@ plot_monthly <- select(df, month, RFclass, NDVI_MEAN, HumOut, TempOut) %>%
     TRUE ~ as.character(month)))
 
 plot_monthly$month <- as.Date.character(plot_monthly$month)
+
+#Night plot ----
+
+period_test <- "night" 
+
+data <- filter(df, period == period_test) %>% 
+  select(., RFclass, general_category, Date, week_day, moon_illu, TempOut, HumOut, Rain, month, anthrophony, geophony, Recording_time, time2, n_days) %>% 
+  na.exclude() %>% 
+  group_by(month) %>% 
+  mutate(n_motif =  n()) %>%
+  droplevels()
+
+labels <- select(data, month, n_motif, n_days) %>% 
+  distinct() %>% 
+  .[order(.$month),] %>% 
+  mutate(month = case_when(month == "202001" ~ "Jan",
+                           month == "202002" ~ "Feb",
+                           month == "202003" ~ "Mar",
+                           month == "202004" ~ "Apr",
+                           month == "202005" ~ "May",
+                           month == "202006" ~ "Jun",
+                           month == "202007" ~ "Jul",
+                           month == "202008" ~ "Aug",
+                           month == "202009" ~ "Sep",
+                           month == "202010" ~ "Oct",
+                           month == "202011" ~ "Nov",
+                           month == "202012" ~ "Dec")) %>% 
+  mutate(average_motif = paste("Motif/day = ", format(round(n_motif/n_days, 2)), sep = "")) %>% 
+  mutate(labels = paste(month, average_motif, sep = "\n"))
+
+### Rose plot - monthly biod
+p_night <- ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
+  geom_bar(aes(y = (..count..))) +
+  scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac", "froginsect" = "#4d9221", "birdfroginsect" = "#9ebcda")) +
+  labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = paste("Recording hours (6): ",levels(data$Recording_time)[4], ", ", levels(data$Recording_time)[5], ", ", levels(data$Recording_time)[6], ", ", levels(data$Recording_time)[1], ", ", levels(data$Recording_time)[2], ", ", levels(data$Recording_time)[3], sep = "")) +
+  scale_x_discrete(labels = labels$labels) +
+  coord_polar() +
+  theme_light(base_size = 11)
+  ggsave(getDataPath("Figures", "GoodFigs", paste("11.04.2022_RosePlot_", period_test, ".jpg", sep = "")), width = 12, height = 9, scale = 1)
 
 
 #Hourly Insects ----
@@ -183,10 +226,10 @@ p3 <- ggplot(insects, aes(x = moon_illu, y = n)) +
   labs(x = "Moon illumination", y = "Number of motifs")
   ggsave(getDataPath("Figures", "GoodFigs", "20.03.2022_hourlyinsects_moon.jpg"))
 
-cow1 <- plot_grid(p1, NULL, labels = c("A", NULL), rel_widths = c(2,0), rel_heights = c(2,0), label_size = 10)
-cow2 <- plot_grid(p2, p3, labels = c("B", "C"), rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10)
+cow1 <- plot_grid(p_night, p1, labels = c("A", "B"), scale = 1, rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10)
+cow2 <- plot_grid(p2, p3, labels = c("C", "D"), rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10)
 cow3 <- plot_grid(cow1, cow2, nrow = 2, rel_heights = c(2,1)) 
-save_plot(getDataPath("Figures", "GoodFigs", "20.03.2022_cow_insects.jpg"), cow3, base_height = 8.5, base_width = 10.5)
+save_plot(getDataPath("Figures", "GoodFigs", "11.04.2022_cow_insects.jpg"), cow3, base_height = 8.5, base_width = 15.5)
 
 #Hourly bird/Insects----
 birdinsects <- filter(df, RFclass == "birdinsect") %>% 

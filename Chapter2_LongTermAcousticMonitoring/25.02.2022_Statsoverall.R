@@ -46,6 +46,7 @@ plot_df$Date <- as.Date.character(plot_df$Date) %>%
   sort()
 
 plot_df$Recording_time <- factor(plot_df$Recording_time, levels = c("0:00:00", "2:00:00", "4:00:00", "6:00:00", "8:00:00", "10:00:00", "12:00:00", "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00"))
+plot_df$week_day <- factor(plot_df$week_day, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
 
 #bird #c51b7d
 #birdinsect #e9a3c9
@@ -111,8 +112,8 @@ plot_df %>% filter(anthrophony == "yes") %>%
   theme_light(base_size = 13) +
   theme(legend.position = "none")+
     coord_polar() +
-    facet_wrap(.~month_char + n_anthro_char + n_days_char + avg_motif_anthro) +
-  ggsave(getDataPath("Figures", "GoodFigs", "15.03.2022_anthrophony_RosePlot_week.jpg"), width = 14, height = 12)
+    facet_wrap(.~month_char + n_anthro_char + n_days_char + avg_motif_anthro)
+  ggsave(getDataPath("Figures", "GoodFigs", "11.04.2022_anthrophony_RosePlot_week.jpg"), width = 14, height = 12)
 
 #Geophony plot ----
 
