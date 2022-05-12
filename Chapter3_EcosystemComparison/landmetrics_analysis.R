@@ -59,7 +59,11 @@ lsm <- lsm_abbreviations_names %>%
 df <- filter(df, metric == "np" | metric == "contag" | metric == "ca" | metric == "pr" | metric == "tca" | metric == "area" | metric == "ncore") %>% 
   mutate(size = case_when(buffer_size == "dry3k" ~ "3k",
                           buffer_size == "wet3k" ~ "3k",
-                          TRUE ~ "325"))
+                          TRUE ~ "325")) %>% 
+  mutate(point = case_when(buffer_size == "dry3k" ~ "drya",
+                           buffer_size == "wet3k" ~ "weta",
+                           buffer_size == "dry325" ~ "drya",
+                           buffer_size == "wet325" ~ "weta"))
 
 split <- split(df, df$level)
 

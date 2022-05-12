@@ -5,8 +5,6 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter2_SoundscapeTemporalAssessment", ...))
 }
 
-weather <- read.csv(getDataPath("05.02.2022_WeatherData.csv")) %>% 
-  select(Date, Time, TempOut, HumOut, Rain) #removing wind speed and rain rate because they are correlated with humidity and rain respectively
 
 df <- read.csv(getDataPath("05.02.2022_completedf.csv")) %>% 
   select(everything(), -X)

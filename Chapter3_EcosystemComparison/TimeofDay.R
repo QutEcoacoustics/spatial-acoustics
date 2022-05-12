@@ -107,22 +107,29 @@ df_fixedtime <- read.csv(getDataPath("13.04.2022_fixtime.csv")) %>%
 
 df_fixedtime <- read.csv(getDataPath("TimeFixed.csv")) #Remember fixing the date format when saving
 
-merged_df <- merge(weather, df_fixedtime, by.x = c("Date", "Time"), by.y = c("date_r_format", "new_time"), all.y = T)
-write.csv(merged_df, getDataPath("07.02.2022_completedf.csv"), row.names = F)
 
-data <- read.csv(getDataPath("07.02.2022_completedf.csv"))
-weekday <- mutate(data, week_day = weekdays(as.Date(data$Date))) %>% 
-  select(Date, week_day, everything()) %>% 
-  write.csv(., getDataPath("08.02.2022_completedf.csv"))
+weekday <- mutate(df_fixedtime, week_day = weekdays(as.Date(df_fixedtime$date_r))) %>% 
+  select(date_r, week_day, everything()) %>% 
+  write.csv(., getDataPath("15.04.2022_completedf.csv"))
+
+rm(list = ls())
+
+df <- read.csv(getDataPath("15.04.2022_completedf.csv"))
 
 df_sunglight <- df %>% select(date_r, lat, long) %>% 
   rename("date" = date_r,
          "lon" = long)
 
+df <- mutate(df, date_time2 = as.POSIXct(paste(date_r, new_time), sep = " "))
+
+df_sunglight$date <- as.Date.character(df_sunglight$date)
+
+df$date_r <- as.Date.character(df$date_r)
+
 sun <- getSunlightTimes(data = df_sunglight, keep = c("sunrise", "sunset", "night", "nightEnd"))
 
  
-df2 <- rename(sun, Date = date) %>% 
+df2 <- rename(sun, date_r = date) %>% 
   left_join(df) %>% 
   distinct() %>%
   mutate(period = case_when(date_time2 %within% interval(sunset, night) ~ 'dusk',
@@ -137,34 +144,37 @@ df2 <- rename(sun, Date = date) %>%
 #                           date_time2 %within% interval(sunrise, sunset) ~ 'day',
 #                           date_time2 %within% interval(night, nightEnd) ~ 'night'))
 
-write.csv(df2, getDataPath("22.02.2022_completedf.csv"), row.names = F)
+write.csv(df2, getDataPath("15.04.2022_completedf.csv"), row.names = F)
 
-df <- read.csv(getDataPath("22.02.2022_completedf.csv"))
+df <- read.csv(getDataPath("15.04.2022_completedf.csv"))
 
 library(suncalc)
 
-df$Date <- as.Date.character(df$Date)
+df$date_r <- as.Date.character(df$date_r)
+# 
+df <- mutate(df, date_time2 = as.POSIXct(paste(date_r, new_time), sep = " "))
 
-df <- mutate(df, date_time2 = as.POSIXct(paste(Date, Time), sep = " "))
+library(lunar)
 
-moon <- getMoonTimes(date = df$Date, lat = -27.3889, lon = 152.8812, tz = "Australia/Brisbane", keep = c("rise", "set"))
+moon_illu <- mutate(df, moon_illu = lunar.illumination(date_r))
 
-#moon <- separate(sun, into = c("moon_rise_date", "moon_rise_time"), col = "rise", sep = " ") %>% 
-  #separate(into = c("moon_set_date", "moon_set_time"), col = "set", sep = " ")
+moon <- getMoonTimes(data = df_sunglight, keep = c("rise", "set"))
 
-rm(new_df)
-
-df <- mutate(df, date_time2 = as.POSIXct(paste(Date, Time), sep = " "))
-
-new_df <- rename(moon, Date = date) %>% 
-  left_join(df) %>% 
+new_df <- rename(moon, date_r = date) %>% 
+  left_join(moon_illu) %>% 
   distinct() %>%
-  mutate(moon_illumination = case_when(date_time2 %within% interval(rise, set) ~ "moon_illu",
-                                       TRUE ~ "no_moon")) %>% 
-  select(rise, set, date_time2, moon_illumination, everything()) %>% 
+  mutate(moon_illumination = case_when(rise >= set ~ case_when(date_time2 %within% interval(set, rise) ~ "moon_illu",
+                                       TRUE ~ "no_moon"),
+                                       rise <= set ~ case_when(date_time2 %within% interval(rise, set) ~ "moon_illu",
+                                       TRUE ~ "no_moon"),
+                                       TRUE ~ "idk")) %>% 
+  select(rise, set, date_time2, moon_illumination, moon_illu, everything()) %>%
   mutate(moon_illu = case_when(moon_illumination == "no_moon" ~ 0,
                                TRUE ~ moon_illu)) %>% 
-  select(Date, moon_illu, period, week_day, TempOut, HumOut, Rain, anthrophony, geophony, EBI_RANGE, NDVI_MEAN, -moon_illumination, -date_time2, set, rise, everything())
+  mutate(moon_illu = case_when(period == "day" ~ 0,
+                               TRUE ~ moon_illu)) %>% 
+  select(rise, set, date_time2, moon_illumination, moon_illu, period, everything())
+  #select(Date, moon_illu, period, week_day, TempOut, HumOut, Rain, anthrophony, geophony, EBI_RANGE, NDVI_MEAN, -moon_illumination, -date_time2, set, rise, everything())
 
-write.csv(new_df, getDataPath("24.02.2022_completedf.csv"), row.names = F)
+write.csv(new_df, getDataPath("15.04.2022_completedf.csv"), row.names = F)
 

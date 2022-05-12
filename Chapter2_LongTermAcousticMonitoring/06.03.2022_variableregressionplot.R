@@ -3,6 +3,7 @@ library(tidyverse)
 library(ggplot2)
 library(scales)
 library(lubridate)
+library(dunn.test)
 #Moon investigation
 
 #Function that gives the path to the folder where the data is
@@ -52,6 +53,8 @@ df <- filter(df, general_category == "anthrophony/biophony" | general_category =
     droplevels(.)
 
 
+
+
 df$RFclass <- as.factor(df$RFclass)
 df$period <- as.factor(df$period)
 df$Date <- as.Date.character(df$Date) %>% 
@@ -96,6 +99,36 @@ data <- filter(df, period == period_test) %>%
   mutate(n_motif =  n()) %>%
   droplevels()
 
+test <- df %>%
+  group_by(Date, RFclass) %>%
+  mutate(n_class = n()) %>% 
+  droplevels(.)
+
+test <- df %>%
+  group_by(Date, RFclass) %>%
+  mutate(n = n())
+
+
+bird <- filter(test, RFclass == "bird") %>%   
+        kruskal.test(x = .$n, g = .$month) 
+
+filter(test, RFclass == "bird") %>% 
+  dunn.test(x = .$n, g = .$month)
+
+
+insect <- filter(test, RFclass == "insect") %>%   
+  kruskal.test(x = .$n, g = .$month)
+
+filter(test, RFclass == "insect") %>% 
+  dunn.test(x = .$n, g = .$month)
+
+birdinsect <- filter(test, RFclass == "birdinsect") %>%   
+  kruskal.test(x = .$n, g = .$month)
+
+filter(test, RFclass == "birdinsect") %>% 
+  dunn.test(x = .$n, g = .$month)
+  
+
 labels <- select(data, month, n_motif, n_days) %>% 
   distinct() %>% 
   .[order(.$month),] %>% 
@@ -123,6 +156,20 @@ p_night <- ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) +
   coord_polar() +
   theme_light(base_size = 11)
   ggsave(getDataPath("Figures", "GoodFigs", paste("11.04.2022_RosePlot_", period_test, ".jpg", sep = "")), width = 12, height = 9, scale = 1)
+  
+  
+ filter(test, RFclass == "bird" | RFclass == "insect" | RFclass == "birdinsect") %>% 
+    ggplot(aes(x = as.factor(month))) +
+    geom_violin(aes(y = n_class, colour = RFclass)) +
+    scale_x_discrete(labels = labels$month) +
+    scale_colour_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac")) +
+    labs(fill = "Sound category", x = "Month", y = "Number of motifs/class") +
+    theme_light(base_size = 11) +
+    facet_wrap(.~ RFclass, scales = "free")
+ ggsave(getDataPath("Figures", "GoodFigs", "14.04.2022_violinplots.jpg"), width = 12, height = 9, scale = 1)
+
+  
+
 
 
 #Hourly Insects ----

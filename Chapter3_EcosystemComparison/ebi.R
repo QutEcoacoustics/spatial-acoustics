@@ -143,7 +143,7 @@ for (raster in ndvi_list) {
   
 }
 
-#write.csv(df, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation/07.04.2022_ndvi.csv")
+# write.csv(df, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation/06.05.2022_ndvi.csv")
 
 
 #NDWI ----
@@ -184,12 +184,27 @@ df_ndwi <- separate(df_ndwi, raster, into = c("drive", "folder", "site", "point_
   separate(point_date, into = c("point", "date"), sep = "_", remove = T) %>% 
   rename("filename" = raster)
 
-df_ndvi <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation/07.04.2022_ndvi.csv")
+#future and past ndvi; for redo original df stop at line 193
+df_ndvi <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation/06.05.2022_ndvi.csv")
 
 df_ndvi <- separate(df_ndvi, raster, into = c("drive", "folder", "site", "point_date", "filename"), sep = "/", remove = F) %>% 
-  select(raster, site, point_date, ndvi_mean, ndvi_max, ndvi_min) %>% 
+  dplyr::select(raster, site, point_date, ndvi_mean, ndvi_max, ndvi_min) %>% 
   separate(point_date, into = c("point", "date"), sep = "_", remove = T) %>% 
-  rename("filename" = raster)
+  rename("filename" = raster) %>% 
+  separate(date, into = c("year", "month_date"), sep = 4, remove = F) %>% 
+  separate(month_date, into = c("month", "day"), sep = 2) %>% 
+  group_by(site, point, year, month) %>% 
+  summarise(mean = mean(ndvi_mean)) %>% 
+  filter(year == "2020") %>% 
+  filter(month == "07" | month == "08" | month == "09" | month == "10" | month == "11" | month == "12") %>% 
+  mutate(site = case_when(site == "chp3" ~ "SERF",
+                          TRUE ~ site)) %>% 
+  pivot_wider(., names_from = "month", values_from = "mean") %>% 
+  dplyr::select(., site, point, `07`, `11`) %>% 
+  rename("past_ndvi" = `07`,
+         "future_ndvi" = `11`)
+
+# write.csv(df_ndvi, "C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation/06.05.2022_pastfuture_ndvi.csv")
   
 df_ebi <- read.csv("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation/05.04.2022_ebi.csv")
 
