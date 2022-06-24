@@ -20,15 +20,17 @@ getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation",  ...))
 }
 
-data_og <- read.csv(getDataPath("10.05.2022_fulldata_indclasses.csv")) %>% 
+data_og <- read.csv(getDataPath("13.05.2022_fixingdata5.csv")) %>% 
   # mutate_at(c(3:6,47,48), ~(scale(.) %>% as.vector(.))) %>% 
   # filter(RFclass == "bird" ) %>% 
-  group_by(site, RFclass, period) %>% 
+  group_by(site, RFclass, date_r) %>% 
   mutate(n = n()) %>% 
-  mutate(moon_illu = case_when(period =="day" ~ 0,
-                               TRUE ~ moon_illu)) %>% 
-  # filter(n > 2) %>% 
-  dplyr::select(everything(), -c(X, Recording_time, avg_rain_previous_months, avg_temp_previous_months, day, week)) %>% 
+  # mutate(moon_illu = case_when(period =="day" ~ 0,
+  #                              TRUE ~ moon_illu)) %>% 
+  rowwise() %>% 
+  mutate(., mean_temp = mean(c(temp_max,temp_min))) %>%
+  dplyr::select(n, everything(), -c(Recording_time, day, week, id, id_path, fid_what)) %>% 
+  filter(n >= 2) %>% 
   distinct()
 
 hist(data_og)

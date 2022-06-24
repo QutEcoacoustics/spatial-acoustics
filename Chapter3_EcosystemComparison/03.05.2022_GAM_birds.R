@@ -32,7 +32,7 @@ data_og <- read.csv(getDataPath("09.05.2022_data.csv")) %>%
 
 summary(data_og)
 
-# data_og <- read.csv(getDataPath("01.05.2022_fulldata.csv"))
+# data_og <- read.csv(getDataPath("13.05.2022_fixingdata.csv"))
 # 
 # data_og$date_r <- ymd(data_og$date_r)
 # data_og$day <- day(data_og$date_r)
@@ -54,8 +54,8 @@ summary(data_og)
 # data_og <- separate(data_og, col = ID.x, into = c("site", "point"), sep = "_", remove = F) %>%
 # # data_og <- filter(data_og, RFclass == set.group) %>%
 #   rowwise() %>%
-#   mutate(natural_cover_3k = sum(ca_class_4_3k, ca_class_8_3k, ca_class_3_3k, ca_class_9_3k, ca_class_6_3k, ca_class_4_3k)) %>%
-#   mutate(natural_cover_325 = sum(ca_class_4_325, ca_class_8_325, ca_class_3_325, ca_class_9_325, ca_class_6_325, ca_class_4_325)) %>%
+#   mutate(natural_cover_3k = sum(ca_class_4_3k, ca_class_8_3k, ca_class_3_3k, ca_class_9_3k, ca_class_6_3k)) %>%
+#   mutate(natural_cover_325 = sum(ca_class_4_325, ca_class_8_325, ca_class_3_325, ca_class_9_325, ca_class_6_325)) %>%
 #   ungroup() %>%
 #   rename("urban_3k" = ca_class_5_3k) %>%
 #   rename("urban_325" = ca_class_5_325) %>%
@@ -64,7 +64,10 @@ summary(data_og)
 #   rename("cleared_3k" = ca_class_7_3k) %>%
 #   rename("cleared_325" = ca_class_7_325) %>%
 #   rename("soil_3k" = ca_class_2_3k) %>%
-#   rename("soil_325" = ca_class_2_325) %>%
+#   rename("soil_325" = ca_class_2_325)
+# 
+# write.csv(data_og, getDataPath("13.05.2022_fixingdata2.csv"))
+
 #  # mutate(across(c(11:43,52,53), ~c(scale(.)))) %>%
 #   droplevels() %>%
 #   dplyr::select(date_r, Recording_time, ID.x, site, point, RFclass, lat, lon, n, soil_3k, urban_3k, water_3k, cleared_3k, natural_cover_3k, contag_landscape_3k, np_landscape_3k, tca_landscape_3k, soil_325, urban_325, water_325, cleared_325, natural_cover_325, contag_landscape_325, np_landscape_325, tca_landscape_325, ndvi_mean, ebi_max, ndwi_mean, temp_max, temp_min, rain_value, moon_illu, period, month_char, bvg, day, week, month, year, bvg_char)

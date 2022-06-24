@@ -14,7 +14,7 @@ getDataPath <- function (...) {
 
 files <- list.files(getDataPath(), pattern = glob2rx("*raster_*325.tif"), recursive = T, full.names = T)
 
-
+file <- files[2]
 
 for (file in files) {
   raster <- raster(file) 
@@ -22,11 +22,12 @@ for (file in files) {
   check_landscape(raster, verbose = T)
   resol <- res(raster)
   new_res <- min(resol)
-  
+
   
   r2 = raster(extent(raster), resolution = new_res, crs = crs(raster))
   r3 = resample(raster, r2, method = "ngb")
   
+  lsm_l_tca(raster)
   
   plot(r3)
   check_landscape(r3, verbose = T)

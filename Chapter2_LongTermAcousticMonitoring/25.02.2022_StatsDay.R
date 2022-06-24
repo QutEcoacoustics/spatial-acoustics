@@ -120,7 +120,7 @@ labels <- select(data, month, n_motif, n_days) %>%
                            month == "202010" ~ "Oct",
                            month == "202011" ~ "Nov",
                            month == "202012" ~ "Dec")) %>% 
-  mutate(average_motif = paste("Motif/day = ", format(round(n_motif/n_days, 2)), sep = "")) %>% 
+  mutate(average_motif = paste("Motif/day = ", format(round(n_motif/n_days, 1)), sep = "")) %>% 
   mutate(labels = paste(month, average_motif, sep = "\n"))
 
 ### Rose plot - monthly biod
@@ -128,11 +128,11 @@ ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) +
   geom_bar(aes(y = (..count..))) +
   scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac", "froginsect" = "#4d9221", "birdfroginsect" = "#9ebcda")) +
     labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = paste("Recording hours (8): ", levels(data$Recording_time)[1], ", ", levels(data$Recording_time)[2], ", ", levels(data$Recording_time)[3], levels(data$Recording_time)[4], ", ", levels(data$Recording_time)[5], ", ", levels(data$Recording_time)[6], ", ", levels(data$Recording_time)[7], ", ", levels(data$Recording_time)[8], sep = "")) +
-    scale_x_discrete(labels = labels$labels) +
-    coord_polar() +
-    theme_light() +
-  theme(plot.margin = unit(c(0.009, 0.0009, 0.009, 0.009), "cm")) +
-  ggsave(getDataPath("Figures", "GoodFigs", paste("15.03.2022_RosePlot_", period_test, ".jpg", sep = "")), width = 12, height = 9)
+    scale_x_discrete(labels = labels$labels, expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  coord_polar() +
+  theme_light(base_size = 15)
+ggsave(getDataPath("Figures", "GoodFigs", paste("07.06.2022_RosePlot_", period_test, ".jpg", sep = "")), width = 12, height = 10, scale = 1)
 
 
 #bird #c51b7d

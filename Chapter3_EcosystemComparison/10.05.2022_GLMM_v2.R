@@ -62,10 +62,10 @@ summarySE <- function(data = NULL, measurevar, groupvars = NULL, na.rm = FALSE, 
 }
 
 data_og <- read.csv(getDataPath("10.05.2022_fulldata_indclasses.csv")) %>% 
-  dplyr::select(site, month, period, n, RFclass, everything(), -c(X, date_r, Recording_time, avg_rain_previous_months, avg_temp_previous_months, day, week, ID.x, point)) %>%
-  mutate_at(c(6:7,10:32), ~(scale(.) %>% as.vector(.))) %>% 
+  dplyr::select(site, month, period, n, RFclass, everything(), -c(X, avg_rain_previous_months, avg_temp_previous_months, day, week)) %>%
+  # mutate_at(c(6:7,10:32), ~(scale(.) %>% as.vector(.))) %>% 
   filter(site == "Eungella") %>% 
-  group_by(month, RFclass, period) %>% 
+  group_by(month, RFclass, date_r, period) %>% 
   mutate(n = n()) %>% 
   distinct()
 
@@ -81,10 +81,13 @@ plot(data_og$ndvi_mean, data_og$n)
 plot(data_og$temp_max, data_og$n)
 plot(data_og$rain_value, data_og$n)
 
+hist(data_og$n)
+
+plot(data_og$moon_illu, data_og$n)
 
 data_og$bvg <- as.factor(data_og$bvg)
 
-m1 <- lme4::glmer(n ~ temp_max + rain_value + natural_cover_325 + contag_landscape_325 + (1|period), family = "poisson", data = data_og)
+m1 <- lme4::glmer(n ~ temp_max + natural_cover_325 + contag_landscape_325 + Recording_time + (1|period), family = "poisson", data = data_og)
 
 vcov(m1)
 

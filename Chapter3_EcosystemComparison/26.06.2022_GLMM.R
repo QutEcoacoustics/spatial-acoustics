@@ -69,7 +69,7 @@ df <- filter(df, general_category == "anthrophony/biophony" | general_category =
   droplevels() %>% 
   filter(RFclass != "NA") %>% 
   separate(., date_r, into = c("new_year", "new_month", "new_day"), sep = "-", remove = F) %>% 
-  select(point, site, date_r, new_month, ID.x, RFclass, general_category, Recording_time,  everything(), -c(X, year, month, day))
+  dplyr::select(point, site, date_r, new_month, ID.x, RFclass, general_category, Recording_time,  everything(), -c(X, year, month, day))
 
 
 
@@ -106,33 +106,33 @@ df <- mutate(df, bvg = case_when(ID.x == "BonBon_DryA" ~ "31",
                               ID.x == "SERF_DryA" ~ "2",
                               ID.x == "SERF_WetA" ~ "98",
                               TRUE ~ "0")) %>% 
-  select(everything(), -c(X2_3k, X5_3k, X9_3k, X16_3k, X60_3k, X98_3k, X2_325, X9_325, X98_325, X3_3k, X4_3k, X62_3k, X4_325, X62_325, X3_325, X20_3k, X21_3k, X31_3k, X20_325, X8_3k, X59_3k, X8_325, X59_325, X31_325, tca_class_1_325, tca_class_1_3k, tca_class_1_325, tca_class_2_3k, tca_class_2_325, tca_class_3_3k, tca_class_3_325, tca_class_4_3k, tca_class_4_325, tca_class_5_3k, tca_class_5_325, tca_class_6_3k, tca_class_6_325, tca_class_7_3k, tca_class_7_325, tca_class_8_3k, tca_class_8_325, tca_class_9_3k, tca_class_9_325, pr_landscape_325, pr_landscape_3k, np_class_1_3k, np_class_7_3k, np_class_8_3k, np_class_3_3k, np_class_9_3k, np_class_5_3k, np_class_6_3k, np_class_2_325, np_class_4_325, np_class_7_325, np_class_8_325, np_class_2_3k, np_class_4_3k, np_class_9_325, np_class_5_325, np_class_6_325))
+  dplyr::select(everything(), -c(X2_3k, X5_3k, X9_3k, X16_3k, X60_3k, X98_3k, X2_325, X9_325, X98_325, X3_3k, X4_3k, X62_3k, X4_325, X62_325, X3_325, X20_3k, X21_3k, X31_3k, X20_325, X8_3k, X59_3k, X8_325, X59_325, X31_325, tca_class_1_325, tca_class_1_3k, tca_class_1_325, tca_class_2_3k, tca_class_2_325, tca_class_3_3k, tca_class_3_325, tca_class_4_3k, tca_class_4_325, tca_class_5_3k, tca_class_5_325, tca_class_6_3k, tca_class_6_325, tca_class_7_3k, tca_class_7_325, tca_class_8_3k, tca_class_8_325, tca_class_9_3k, tca_class_9_325, pr_landscape_325, pr_landscape_3k, np_class_1_3k, np_class_7_3k, np_class_8_3k, np_class_3_3k, np_class_9_3k, np_class_5_3k, np_class_6_3k, np_class_2_325, np_class_4_325, np_class_7_325, np_class_8_325, np_class_2_3k, np_class_4_3k, np_class_9_325, np_class_5_325, np_class_6_325))
 
 
 library(glmmfields)
 library(MuMIn)
 
 data <- filter(df, RFclass != "NA" & new_month != "NA") %>% 
-  group_by(date_r, Recording_time, ID.x, RFclass, lat, lon) %>% 
+  group_by(date_r, Recording_time, ID.x, RFclass, lat, lon, fid_what, id_path, id) %>% 
   summarise(n =  n()) %>%
   distinct() %>% 
   droplevels()
 
 
-land_df <- select(df, ID.x, RFclass, ca_class_2_3k, ca_class_4_3k, contag_landscape_3k, np_landscape_3k, tca_landscape_3k, ca_class_1_3k, ca_class_7_3k, ca_class_8_3k, ca_class_3_3k, ca_class_9_3k, ca_class_5_3k, ca_class_6_3k, ca_class_2_325, ca_class_4_325, contag_landscape_325, np_landscape_325, tca_landscape_325, ca_class_7_325, ca_class_8_325, ca_class_1_325, ca_class_3_325, np_class_1_325, np_class_3_325, ca_class_9_325, ca_class_5_325, ca_class_6_325) %>% 
+land_df <-dplyr:: select(df, ID.x, RFclass, ca_class_2_3k, ca_class_4_3k, contag_landscape_3k, np_landscape_3k, tca_landscape_3k, ca_class_1_3k, ca_class_7_3k, ca_class_8_3k, ca_class_3_3k, ca_class_9_3k, ca_class_5_3k, ca_class_6_3k, ca_class_2_325, ca_class_4_325, contag_landscape_325, np_landscape_325, tca_landscape_325, ca_class_7_325, ca_class_8_325, ca_class_1_325, ca_class_3_325, np_class_1_325, np_class_3_325, ca_class_9_325, ca_class_5_325, ca_class_6_325) %>% 
   group_by(ID.x, RFclass) %>%
   summarise_all(mean)
   
 
 data2 <- full_join(data, land_df, by = c("ID.x", "RFclass"))
 
-temp_df <- select(df, ID.x, RFclass, date_r, Recording_time, ndvi_mean, ebi_max, ndwi_mean, temp_max, temp_min, rain_value, moon_illu) %>% 
+temp_df <- dplyr::select(df, ID.x, RFclass, date_r, Recording_time, ndvi_mean, ebi_max, ndwi_mean, temp_max, temp_min, rain_value, moon_illu) %>% 
   group_by(ID.x, date_r, RFclass, Recording_time) %>%
   summarise_all(mean)
 
 data2 <- inner_join(data2, temp_df, by = c("date_r", "Recording_time", "ID.x", "RFclass"))
 
-categorical_df <- select(df, ID.x, RFclass, date_r, Recording_time, period, month_char, bvg) %>% 
+categorical_df <- dplyr::select(df, ID.x, RFclass, date_r, Recording_time, period, month_char, bvg) %>% 
   group_by(ID.x, RFclass, date_r, Recording_time) %>% 
   distinct()
 
@@ -141,7 +141,7 @@ data3 <- inner_join(data2, categorical_df, by = c("ID.x", "Recording_time", "dat
 data3[is.na(data3)] <- 0
 data3 <- data.frame(data3)
 
-write.csv(data3, getDataPath("01.05.2022_fulldata.csv"))
+write.csv(data3, getDataPath("13.05.2022_fixingdata.csv"))
 
 library(lme4)
 library(coefplot)
