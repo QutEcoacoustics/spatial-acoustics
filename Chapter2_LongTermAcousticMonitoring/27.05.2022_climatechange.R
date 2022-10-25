@@ -115,8 +115,8 @@ test$date <- ymd(test$date)
   ggplot(aes(x = date, y = insect, colour = climate_change)) +
   geom_point() +
   geom_smooth(se = F) +
-  theme_bw() +
-  theme(legend.position = "none"))
+  theme(text = element_text(size = 20), legend.position = "none") +
+  labs(x = "Date", y = "Insect"))
   ggsave(getDataPath("Figures", "climate_change_insect.jpg"))
   
 
@@ -124,15 +124,16 @@ test$date <- ymd(test$date)
   ggplot(aes(x = date, y = bird, colour = climate_change)) +
   geom_point() +
   geom_smooth(se = F) +
-  theme_bw() +
-  theme(legend.position = "none"))
+    theme(text = element_text(size = 20), legend.position = "none") +
+    labs(x = "Date", y = "Bird"))
   ggsave(getDataPath("Figures", "climate_change_bird.jpg"))
 
 c <- test %>% 
   ggplot(aes(x = date, y = birdinsect, colour = climate_change)) +
   geom_point() +
   geom_smooth(se = F) +
-  theme_bw() +
+  theme(text = element_text(size = 20), legend.position = "none") +
+  labs(x = "Date", y = "Bird/insect") +
   scale_colour_discrete(name = "Temperature in relation to historic mean", labels = c("Higher than average", "Lower than average"))
 ggsave(getDataPath("Figures", "climate_change_birdinsect.jpg"))
 
@@ -140,7 +141,7 @@ library(cowplot)
 
 p1 <- plot_grid(a,b, labels = c("A", "B"))
 plot_grid(p1, c, nrow = 2, labels = c(" ", "C"), rel_widths = c(2,1))
-ggsave(getDataPath("Figures", "climate_change_all.jpg"))
+ggsave(getDataPath("Figures", "GoodFigs", "08.07.2022_fig7.tiff"))
 
 
   

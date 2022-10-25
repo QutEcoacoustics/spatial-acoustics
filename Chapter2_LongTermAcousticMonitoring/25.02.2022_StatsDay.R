@@ -55,7 +55,7 @@ ggplot(data = plot_df, aes(x = as.factor(Recording_time), fill = RFclass)) +
   scale_fill_manual(values = c("#c51b7d", "#9ebcda", "#e9a3c9", "#4d9221", "#5ab4ac")) +
   labs(fill = "Sound class", x = "Time", y = "% sound class") +
   coord_polar() +
-  facet_wrap(.~month) +
+  facet_wrap(.~month) 
   ggsave(getDataPath("Figures", "25.02.2022_RosePlot_hourly.jpg"), width = 15, height = 9)
 
 

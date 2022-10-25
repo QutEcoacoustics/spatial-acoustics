@@ -33,8 +33,9 @@ df <- read.csv(getDataPath("13.05.2022_fixingdata5.csv")) %>%
 
 
 
-df <- filter(df, general_category == "anthrophony/biophony" | general_category == "anthrophony/biophony/geophony" | general_category == "biophony" | general_category == "biophony/geophony") %>% 
-  mutate(., general_category = "biophony") %>% 
+df <- df %>% 
+  # filter(., general_category == "anthrophony/biophony" | general_category == "anthrophony/biophony/geophony" | general_category == "biophony" | general_category == "biophony/geophony") %>% 
+  # mutate(., general_category = "biophony") %>% 
   mutate(., RFclass = case_when(RFclass == "anthrobird" ~ "bird",
                                 RFclass == "anthrobirdfroggeoinsect" ~ "birdfroginsect",
                                 RFclass == "anthrobirdgeo" ~ "bird",
@@ -72,9 +73,9 @@ df <- filter(df, general_category == "anthrophony/biophony" | general_category =
                                 TRUE ~ as.character(RFclass)
   )) %>%
   droplevels() %>% 
-  filter(RFclass != "NA") %>% 
+  filter(RFclass != "NA") %>%
   separate(., date_r, into = c("new_year", "new_month", "new_day"), sep = "-", remove = F) %>% 
-  dplyr::select(point, site, date_r, new_month, ID.x, RFclass, general_category, Recording_time,  everything(), -c(X, year, month, day))
+  dplyr::select(point, site, date_r, new_month, ID.x, RFclass, Recording_time,  everything())
 
 
 summary(data$RFclass)
@@ -91,14 +92,14 @@ df$date_r <- as.Date.character(df$date_r)
 df$new_month <- as.factor(df$new_month)
 
 df$Recording_time <- factor(df$Recording_time, levels = c("0:00:00", "2:00:00", "4:00:00", "6:00:00", "8:00:00", "10:00:00", "12:00:00", "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00"))
-df$week_day <- factor(df$week_day, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+# df$week_day <- factor(df$week_day, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
 
-df$technophony <- as.factor(df$technophony)
-df$geophony <- as.factor(df$geophony)
+# df$technophony <- as.factor(df$technophony)
+# df$geophony <- as.factor(df$geophony)
 
-df <- mutate(df, month_char = as.factor(case_when(month == "8" ~ "august",
-                                                            month == "9" ~ "september",
-                                                            month == "10" ~ "october")))
+df <- mutate(df, month_char = as.factor(case_when(new_month == "08" ~ "august",
+                                                  new_month == "09" ~ "september",
+                                                  new_month == "10" ~ "october")))
 
 df$new_month <- factor(df$month_char, levels = c("august", "september", "october"))
 
@@ -106,11 +107,11 @@ summary(df)
 
 #write.csv(plot_df, getDataPath("18.04.2022_df_filtered.csv"))
 
-data <- filter(df, RFclass != "NA" & month != "NA") %>% 
+data <- filter(df, RFclass != "NA" & new_month != "NA") %>% 
   mutate(n_days = 92) %>% 
-  dplyr::select(RFclass, date_r, Recording_time, n_days, month, site, month_char) %>% 
+  dplyr::select(RFclass, date_r, Recording_time, n_days, new_month, site, month_char) %>% 
   na.exclude() %>% 
-  group_by(month, site) %>% 
+  group_by(new_month, site) %>% 
   mutate(n_motif =  n()) %>%
   mutate(avg_motif = paste("Motif/day=", format(round(n_motif/n_days, 0)))) %>% 
   mutate(n_motif_char = paste("n motifs=", n_motif, sep = "")) %>%
@@ -120,13 +121,13 @@ data <- filter(df, RFclass != "NA" & month != "NA") %>%
 
 data$month_nmotif_char <- factor(data$month_nmotif_char, levels = c("N motif august = 322", "N motif september = 670", "N motif october = 727", "N motif august = 1536", "N motif september = 1721", "N motif october = 2204", "N motif august = 1385", "N motif september = 1685", "N motif october = 1610", "N motif august = 1122", "N motif september = 1110", "N motif october = 1300", "N motif august = 2043", "N motif september = 1989", "N motif october = 2056"))
 
-labels <- dplyr::select(data, month, n_motif, n_days, site) %>% 
+labels <- dplyr::select(data, new_month, n_motif, n_days, site) %>% 
   distinct() %>% 
-  mutate(month = case_when(month == "8" ~ "Aug",
-                               month == "9" ~ "Sep",
-                               month == "10" ~ "Oct")) %>% 
+  mutate(new_month = case_when(new_month == "8" ~ "Aug",
+                               new_month == "9" ~ "Sep",
+                               new_month == "10" ~ "Oct")) %>% 
   mutate(average_motif = paste("Motif/day = ", format(round(n_motif/n_days, 2)), sep = "")) %>% 
-  mutate(labels = paste(month, average_motif, sep = "\n"))
+  mutate(labels = paste(new_month, average_motif, sep = "\n"))
 
 data$site <- factor(data$site, levels = c("Eungella", "SERF", "Bowra", "BonBon", "Booroopki"))
 
@@ -137,16 +138,16 @@ data$site <- factor(data$site, levels = c("Eungella", "SERF", "Bowra", "BonBon",
 #birdfroginsect ##9ebcda
 
 # Hourly plots
-data %>% filter(month != "NA") %>%
-  
+data %>% filter(new_month != "NA") %>%
   ggplot(data = ., aes(x = as.factor(Recording_time), fill = RFclass)) + 
   geom_bar() +
   scale_fill_manual(values = c("bird" = "#c51b7d", "insect" = "#5ab4ac", "frog" = "#f7fcb9")) +
-  labs(fill = "Sound class", x = "Time", y = "count sound class") +
+  labs(fill = "Group", x = "Time", y = "Group count") +
   scale_x_discrete(labels = c("0:00:00" = "0:00", "2:00:00" = "2:00", "4:00:00" = "4:00", "6:00:00" = "6:00", "8:00:00" = "8:00", "10:00:00" = "10:00", "12:00:00" = "12:00", "14:00:00" = "14:00", "16:00:00" = "16:00", "18:00:00" = "18:00", "20:00:00" = "20:00", "22:00:00" = "22:00")) +
   # coord_polar() +
+  theme(strip.text.x = element_text(size = 15), axis.text = element_text(size = 10), legend.text = element_text(size = 13), legend.title = element_text(size = 14)) +
   facet_wrap(~site + month_nmotif_char, nrow = 5, ncol = 3)
-ggsave(getDataPath("Figures", "30.05.2022_BarPlot_hourly_month_site.jpg"), width = 15, height = 9)
+ggsave(getDataPath("Figures", "06.07.2022_BarPlot_hourly_month_site.jpg"), width = 15, height = 9)
 
 #bird #c51b7d
 #birdinsect #e9a3c9

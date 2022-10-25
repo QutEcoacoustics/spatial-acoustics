@@ -16,7 +16,7 @@ step1 <- "10_RF"
 
 #Round1----
 # one RF per point
-#First thing I'll clean up the file - removing some repeated and unnecessary columns + add the information on the site so next time I run I can just merge the files and do it. I'll create folders named first round; second round; third round inside a RF folder; I'll also add a spreadsheet with the RF results for each round so I can evaluate it later. This part doesn't need to repeat, round 2 should start from line 42 - some bits will be kind of repeated though
+#So here I've done some things manually - not ideal. I'll try to make it First thing I'll clean up the file - removing some repeated and unnecessary columns + add the information on the site so next time I run I can just merge the files and do it. I'll create folders named first round; second round; third round inside a RF folder; I'll also add a spreadsheet with the RF results for each round so I can evaluate it later. This part doesn't need to repeat, round 2 should start from line 42 - some bits will be kind of repeated though
 
 # round <- "Round1"
 # 

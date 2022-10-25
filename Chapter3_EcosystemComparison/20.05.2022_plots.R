@@ -7,6 +7,7 @@ library(lubridate)
 getDataPath <- function (...) {
   return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation",  ...))
 }
+
 AICc.PERMANOVA2 <- function(adonis2.model) {
   
   # check to see if object is an adonis2 model...
@@ -177,7 +178,7 @@ ggplot(data_og, aes(x = ID, y = tca_landscape_325, colour = bvg_char)) +
   scale_colour_manual(values = c("#4d9221", "#35978f", "#35978f", "#35978f", "#abdda4", "#dfc27d", "#4d9221"))
 ggsave(getDataPath("Figures", "25.05.2022_tca.jpg"))
 
-bvg_labs <- c("Dry rainforest", "Euc. open forest/shrubby understorey", "Euc. woodlands/tussock grass understorey", "Euc. woodland/shrubby understorey", "Mulga woodlands/tussock grass/forbs", "Saltbush/bluebush shrublands", "Sub-tropical rainforest")
+bvg_labs <- c("Dry rainforest", "Euc. open forest/shrub understorey", "Euc. woodlands/grass understorey", "Euc. woodland/shrub understorey", "Mulga woodlands/grass/forbs", "Saltbush/bluebush shrublands", "Sub-tropical rainforest")
 names(bvg_labs) <- c("dry_rainforest", "euc_open_shruby_under", "euc_wood_grassy_under", "euc_wood_shruby_under", "mulga_wood_grass_forbs", "saltbush_shrub", "subtropical_rainforest")
 
 data_og <- data_og %>% mutate(NC = paste("NC: ", round(natural_cover_325), sep = ""),
@@ -222,25 +223,41 @@ data_og %>% filter(RFclass == "frog") %>%
   xlab("Sites + Landscape metrics")
 ggsave(getDataPath("Figures", "02.06.2022_frogperenviro.jpg"), height = 10, width = 20)
 
+#Figure in text ----
 ggplot(data_og, aes(x = mean_temp, y = n, colour = bvg_char)) +
   geom_point() +
   geom_smooth(span = 100) +
-  theme_bw() +
+  theme(text = element_text(size = 15)) +
+  guides(colour = guide_legend(override.aes = list(size = 5))) +
   # annotate(geom = "text", x = 1:nrow(data_og), y = 1, label = data_og$natural_cover_325) +
   scale_colour_manual(values = c("#66c2a4", "#a6bddb", "#3690c0", "#023858", "#88419d", "#dfc27d", "#4d9221"), labels = bvg_labs) +
-  labs(colour = "Vegetation groups", x = "Mean temperature") +
+  labs(colour = "Vegetation groups", x = "Mean temperature", y = "Number of motifs") +
   facet_grid(RFclass~ID_new)
-ggsave(getDataPath("Figures", "02.06.2022_allgroupspertemp.jpg"), height = 10, width = 20)
+ggsave(getDataPath("Figures", "20.07.2022_allgroupspertemp.tiff"), height = 10, width = 20)
 
 
-  ggplot(data_og, aes(x =labels, y = n, fill = bvg_char)) +
+ggplot(data_og, aes(x =labels, y = n, fill = bvg_char)) +
   geom_boxplot() +
-  theme_bw() +
+  theme(strip.text.x = element_blank(), strip.text.y = element_text(size = 15), legend.position = "none") +
+  # theme_bw() +
   # annotate(geom = "text", x = 1:nrow(data_og), y = 1, label = data_og$natural_cover_325) +
   scale_fill_manual(values = c("#66c2a4", "#a6bddb", "#3690c0", "#023858", "#88419d", "#dfc27d", "#4d9221")) +
   facet_grid(RFclass~bvg_char, scales = "free_x", labeller = labeller(bvg_char = bvg_labs)) +
   xlab("Sites + Landscape metrics")
-ggsave(getDataPath("Figures", "02.06.2022_allgroupsperenviro.jpg"), height = 10, width = 20)
+ggsave(getDataPath("Figures", "06.07.2022_allgroupsperenviro.jpg"), height = 10, width = 20)  
+
+#Figure in text ----
+ggplot(data_og, aes(x =labels, y = n, fill = bvg_char)) +
+  geom_boxplot() +
+  theme(strip.text.x = element_blank(), text = element_text(size = 15)) +
+  guides(colour = guide_legend(override.aes = list(size = 5))) +
+  # theme_bw() +
+  # annotate(geom = "text", x = 1:nrow(data_og), y = 1, label = data_og$natural_cover_325) +
+  scale_fill_manual(values = c("#66c2a4", "#a6bddb", "#3690c0", "#023858", "#88419d", "#dfc27d", "#4d9221"), name = "Vegetation type", labels = bvg_labs) +
+  facet_grid(RFclass~bvg_char, scales = "free_x", labeller = labeller(bvg_char = bvg_labs)) +
+  xlab("Sites + Landscape metrics") +
+  ylab("Number of motifs")
+ggsave(getDataPath("Figures", "11.07.2022_allgroupsperenviro.tiff"), height = 10, width = 20)
 
 library(cowplot)
 

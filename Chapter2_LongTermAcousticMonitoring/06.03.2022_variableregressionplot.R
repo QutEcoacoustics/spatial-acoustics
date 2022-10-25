@@ -153,13 +153,13 @@ labels <- select(data, month, n_motif, n_days) %>%
 ### Rose plot - monthly biod
 (p_night <- ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
   geom_bar(aes(y = (..count..))) +
-  scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac", "froginsect" = "#4d9221", "birdfroginsect" = "#9ebcda")) +
-  labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = paste("Recording hours (6): ",levels(data$Recording_time)[4], ", ", levels(data$Recording_time)[5], ", ", levels(data$Recording_time)[6], ", ", levels(data$Recording_time)[1], ", ", levels(data$Recording_time)[2], ", ", levels(data$Recording_time)[3], sep = "")) +
+  scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac", "froginsect" = "#4d9221"), labels = c("Bird", "Bird/insect", "Insect", "Frog/insect")) +
+  labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = "Recording hours (6): 18:00; 20:00; 22:00;  \n00:00; 02:00") +
   scale_x_discrete(labels = labels$month, expand = c(0,0)) +
   scale_y_continuous(expand = c(0,0)) +
   coord_polar() +
-  theme_light(base_size = 15))
-  ggsave(getDataPath("Figures", "GoodFigs", paste("23.06.2022_RosePlot_", period_test, ".tiff", sep = "")), width = 12, height = 10, scale = 1)
+  theme(plot.caption = element_text(hjust = 0), text = element_text(size = 20)))
+  ggsave(getDataPath("Figures", "GoodFigs", paste("08.07.2022_RosePlot_", period_test, ".tiff", sep = "")), width = 12, height = 10, scale = 1)
   
 period_test <- "dusk" 
 
@@ -171,18 +171,24 @@ data <- filter(df, period == period_test) %>%
   droplevels()
 
 
-(p_dusk <- ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
+(p_dusk <- data %>% 
+    # filter(RFclass != "froginsect" | RFclass != "birdfroginsect") %>%
+    # droplevels() %>% 
+    ggplot(data = ., aes(x = as.factor(month), fill = RFclass)) + 
   geom_bar(aes(y = (..count..))) +
-  scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac", "froginsect" = "#4d9221", "birdfroginsect" = "#9ebcda")) +
-  labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = paste("Recording hours (3): ", levels(data$Recording_time)[1], ", ", levels(data$Recording_time)[2], ", ", levels(data$Recording_time)[3], sep = "")) +
+  scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac"), labels = c("Bird", "Bird/insect", "Insect")) +
+  labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = "Recording hours (3): 16:00; 18:00; 20:00") +
   scale_x_discrete(labels = labels$month, expand = c(0,0)) +
   scale_y_continuous(expand = c(0,0)) +
   coord_polar() +
-  theme_light(base_size = 15))
-ggsave(getDataPath("Figures", "GoodFigs", paste("23.06.2022_RosePlot_", period_test, ".tiff", sep = "")), width = 12, height = 10, scale = 1)
+    theme(plot.caption = element_text(hjust = 0), text = element_text(size = 20)))
+ggsave(getDataPath("Figures", "GoodFigs", paste("08.07.2022_RosePlot_", period_test, ".tiff", sep = "")), width = 12, height = 10, scale = 1)
 
+library(cowplot)
   
-(cow_dusk_night <- plot_grid(p_dusk, p_night, labels = c("A", "B"), scale = 1)), rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10))
+(cow_dusk_night <- plot_grid(p_dusk, p_night, labels = c("A - Dusk", "B - Night"), scale = 1, label_x = 0, label_y = 0.9))
+save_plot(getDataPath("Figures", "GoodFigs", "16.08.2022_fig5.tiff"), cow_dusk_night, base_height = 8.5, base_width = 15.5)
+
 
 (cow1 <- plot_grid(p1, labels = c("A"), scale = 1, rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10))
 (cow2 <- plot_grid(p2, p3, p4, labels = c("B", "C", "D"), rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10, ncol = 3))
@@ -204,13 +210,13 @@ p1 <- plot_monthly %>% filter(RFclass == "insect" & variables != "Humidity") %>%
   scale_colour_manual(values = c("#5ab4ac", "#238b45", "#fd8d3c"), labels = c("Insect", "NDVI", "Temperature")) +
   labs(colour = "Variables", x = "Month", y = "Scaled values") +
   scale_x_date(breaks = "2 month", labels = c("February", "April", "June", "August", "October", "December", "Januray")) +
-  theme_light() 
+  theme(text = element_text(size = 20))
   ggsave(getDataPath("Figures", "GoodFigs", "18.03.2022_insectmonthvars.jpg"))
 
 p2 <- ggplot(insects, aes(x = HumOut, y = n)) + 
   geom_smooth(colour = "black") +
-  theme_light() +
-  labs(x = "Humidity", y = "Number of motifs")
+  labs(x = "Humidity", y = "Number of motifs") +
+  theme(text = element_text(size = 20))
   ggsave(getDataPath("Figures", "GoodFigs", "20.03.2022_hourlyinsects_humidity.jpg"))
 
 # ggplot(insects, aes(x = Recording_time, na.rm = T)) +
@@ -287,13 +293,13 @@ p2 <- ggplot(insects, aes(x = HumOut, y = n)) +
 
 p3 <- ggplot(insects, aes(x = moon_illu, y = n)) + 
   geom_smooth(colour = "black") +
-  theme_light() +
+  theme(text = element_text(size = 20)) +
   labs(x = "Moon illumination", y = "Number of motifs")
   ggsave(getDataPath("Figures", "GoodFigs", "20.03.2022_hourlyinsects_moon.jpg"))
   
 (p4 <- ggplot(insects, aes(x = TempOut, y = n)) + 
     geom_smooth(colour = "black") +
-    theme_light() +
+    theme(text = element_text(size = 20)) +
     labs(x = "Temperature", y = "Number of motifs"))
   ggsave(getDataPath("Figures", "GoodFigs", "20.03.2022_hourlyinsects_temp.jpg"))
   
@@ -302,7 +308,7 @@ library(cowplot)
 (cow1 <- plot_grid(p1, labels = c("A"), scale = 1, rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10))
 (cow2 <- plot_grid(p2, p3, p4, labels = c("B", "C", "D"), rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10, ncol = 3))
 (cow3 <- plot_grid(cow1, cow2, nrow = 2, rel_heights = c(2,1)))
-save_plot(getDataPath("Figures", "GoodFigs", "07.06.2022_cow_insects.jpg"), cow3, base_height = 8.5, base_width = 15.5)
+save_plot(getDataPath("Figures", "GoodFigs", "08.07.2022_Fi6.tiff"), cow3, base_height = 8.5, base_width = 15.5)
 
 #Hourly bird/Insects----
 birdinsects <- filter(df, RFclass == "birdinsect") %>% 
@@ -322,15 +328,16 @@ data <- filter(df, period == period_test) %>%
   droplevels()
 
 
-p_dawn <- ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
+(p_dawn <- ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
   geom_bar(aes(y = (..count..))) +
-  scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac", "froginsect" = "#4d9221", "birdfroginsect" = "#9ebcda")) +
-  labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month") +
+  scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac"), labels = c("Bird", "Bird/insect", "Insect")) +
+    labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = "Recording hours (3): 02:00; 04:00; 06:00") +
   scale_x_discrete(labels = labels$month, expand = c(0,0)) +
   scale_y_continuous(expand = c(0,0)) +
   coord_polar() +
-  theme_light(base_size = 15)
-ggsave(getDataPath("Figures", "GoodFigs", paste("07.06.2022_RosePlot_", period_test, ".jpg", sep = "")), width = 12, height = 10, scale = 1)
+    theme(plot.caption = element_text(hjust = 0), text = element_text(size = 15)))
+ggsave(getDataPath("Figures", "GoodFigs", paste("08.07.2022_RosePlot_", period_test, ".jpg", sep = "")), width = 12, height = 10, scale = 1)
+
 
 
 #InsectBird
@@ -366,13 +373,13 @@ p4 <- plot_monthly_insectbird %>% filter(RFclass == "birdinsect") %>%
     scale_colour_manual(values = c("#e9a3c9", "#0570b0", "#fd8d3c"), labels = c("Bird/insect", "Humidity", "Temperature")) +
   labs(colour = "Variables", x = "Month", y = "Scaled values") +
   scale_x_date(breaks = "2 month", labels = c("Januray", "February", "April", "June", "August", "October", "December", "January")) +
-  theme_light() 
+  theme(text = element_text(size = 15))
   ggsave(getDataPath("Figures", "GoodFigs", "18.03.2022_birdinsectmonthvars.jpg"))
 
 p5 <- ggplot(birdinsects, aes(x = HumOut, y = n)) + 
   geom_smooth(colour = "black") +
-  theme_light() +
-  labs(x = "Humidity", y = "Number of motifs") 
+  labs(x = "Humidity", y = "Number of motifs")+
+  theme(text = element_text(size = 15))
   ggsave(getDataPath("Figures", "GoodFigs", "20.03.2022_hourlybirdinsects_hum.jpg"))
 
 # ggplot(birdinsects, aes(x = Recording_time, na.rm = T)) +
@@ -389,8 +396,8 @@ p5 <- ggplot(birdinsects, aes(x = HumOut, y = n)) +
 
 p6 <- ggplot(birdinsects, aes(x = TempOut, y = n)) + 
   geom_smooth(colour = "black") +
-  theme_light() +
-  labs(x = "Temperature", y = "Number of motifs")
+  labs(x = "Temperature", y = "Number of motifs") +
+  theme(text = element_text(size = 15))
   ggsave(getDataPath("Figures", "GoodFigs", "20.03.2022_hourlybirdinsects_temp.jpg"))
 
 # ggplot(birdinsects, aes(x = Recording_time, na.rm = T)) +
@@ -410,10 +417,10 @@ p6 <- ggplot(birdinsects, aes(x = TempOut, y = n)) +
   #froginsect #4d9221
   #birdfroginsect ##9ebcda
   #temp #feb24c
-cow4 <- plot_grid(p_dawn, p4, labels = c("A", "B"), label_size = 10)
-cow5 <- plot_grid(p5, p6, labels = c("C", "D"), rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10)
-cow6 <- plot_grid(cow4, cow5, nrow = 2, rel_heights = c(2,1)) 
-save_plot(getDataPath("Figures", "GoodFigs", "23.06.2022_cow_cicada.tiff"), cow6, base_height = 8.5, base_width = 10.5)
+cow4 <- plot_grid(p_dawn, p4, labels = c("A", "B"), label_size = 10, label_y = 1.01)
+cow5 <- plot_grid(p5, p6, labels = c("C", "D"), rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10,  label_y = 1.1)
+(cow6 <- plot_grid(cow4, cow5, nrow = 2, rel_heights = c(2,1))) 
+save_plot(getDataPath("Figures", "GoodFigs", "08.07.2022_Fig3.tiff"), cow6, base_height = 8.5, base_width = 10.5)
 
 #Hourly Bird----
 period_test <- "day" 
@@ -427,14 +434,17 @@ data <- filter(df, period == period_test) %>%
   mutate(n_motif =  n()) %>%
   droplevels()
 
-p_day <- ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
+data$Recording_time
+
+(p_day <- ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
   geom_bar(aes(y = (..count..))) +
-  scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac", "froginsect" = "#4d9221", "birdfroginsect" = "#9ebcda")) +
-  labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month") +
+    scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac"), labels = c("Bird", "Bird/insect", "Insect")) +
+  labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = "Recording hours (8): 04:00; 06:00; 08:00; 10:00; 12:00;  \n14:00; 16:00; 18:00") +
   scale_x_discrete(labels = labels$month, expand = c(0,0)) +
   scale_y_continuous(expand = c(0,0)) +
   coord_polar() +
-  theme_light(base_size = 15)
+    theme(plot.caption = element_text(hjust = 0), text = element_text(size = 15)))
+
 
 bird <- filter(df, RFclass == "bird") %>% 
   group_by(Recording_time) %>% 
@@ -448,8 +458,7 @@ p7 <- plot_monthly %>% filter(RFclass == "bird" & variables != "Temp") %>%
   geom_smooth() +
   scale_colour_manual(values = c("#c51b7d", "#0570b0", "#238b45"), labels = c("Bird", "Humidity", "NDVI")) +
   labs(colour = "Variables", x = "Month", y = "Scaled values") +
-  scale_x_date(breaks = "2 month", labels = c("February", "April", "June", "August", "October", "December", "January")) +
-  theme_light()
+  scale_x_date(breaks = "2 month", labels = c("February", "April", "June", "August", "October", "December", "January"))
   ggsave(getDataPath("Figures", "GoodFigs", "18.03.2022_birdmonthvars.jpg"))
 
 # ggplot(bird, aes(x = Recording_time, na.rm = T)) +
@@ -465,7 +474,6 @@ p7 <- plot_monthly %>% filter(RFclass == "bird" & variables != "Temp") %>%
 
 p8 <- ggplot(bird, aes(x = HumOut, y = n)) + 
   geom_smooth(colour = "black") +
-  theme_light() +
   labs(x = "Humidity", y = "Number of motifs")
   ggsave(getDataPath("Figures", "GoodFigs", "20.03.2022_hourlybird_hum.jpg"))
 
@@ -483,14 +491,13 @@ p8 <- ggplot(bird, aes(x = HumOut, y = n)) +
 
 p9 <- ggplot(bird, aes(x = TempOut, y = n)) + 
   geom_smooth(colour = "black") +
-  theme_light() +
   labs(x = "Temperature", y = "Number of motifs")
   ggsave(getDataPath("Figures", "GoodFigs", "20.03.2022_hourlybird_temp.jpg"))
 
-cow7 <- plot_grid(p_day, p7, labels = c("A", "B"), label_size = 10)
-cow8 <- plot_grid(p8, p9, labels = c("B", "C"), rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10)
+cow7 <- plot_grid(p_day, p7, labels = c("A", "B"), label_size = 10, label_y = 1.01)
+cow8 <- plot_grid(p8, p9, labels = c("B", "C"), rel_widths = c(2,2), rel_heights = c(1,1), label_size = 10, label_y = 1.01)
 cow9 <- plot_grid(cow7, cow8, nrow = 2, rel_heights = c(2,1)) 
-save_plot(getDataPath("Figures", "GoodFigs", "23.06.2022_cow_bird.tiff"), cow9, base_height = 8.5, base_width = 10.5)
+save_plot(getDataPath("Figures", "GoodFigs", "16.08.2022_fig4.tiff"), cow9, base_height = 8.5, base_width = 10.5)
 
 
 #Monthly Insects----

@@ -6,6 +6,7 @@ library(wavelets)
 library(dtwclust)
 library(randomForest)
 library(magick)
+library(rJava)
 
 rm(list = ls())
 
@@ -284,11 +285,6 @@ for (geo in geo_id) {
 
 #step3: 3_HIME----
 
-
-library(rJava)
-
-
-
 # Set the directory containing the files
 input_directory <- getDataPath(folder, step2)
 # The directory to store the results
@@ -390,7 +386,7 @@ for (geo in geo_id) {
       geom_line() +
       facet_wrap(. ~ index) +
       theme_classic() +
-      theme(axis.text.x = element_blank()) +
+      theme(axis.text.x = element_blank()) 
       ggsave(getDataPath(
         folder,
         "Figures",
@@ -547,7 +543,7 @@ for (geo in geo_id) {
           axis.text = element_blank(),
           axis.ticks = element_blank(),
           legend.position = "none"
-        ) +
+        ) 
         ggsave(getDataPath(
           folder,
           "Figures",
@@ -646,10 +642,11 @@ img_prep <- separate(motif_complete,
 dir.create(getDataPath(folder, step7, unique(img_prep$site)))
 dir.create(getDataPath(folder, step7,unique(img_prep$site), unique(img_prep$point)))
       
+
+paste(img_prep$FileName[row], "__", img_prep$index_name[row], ".png", sep = "")
       for (row in 1:nrow(img_prep)) {
         
-        #list.files(getDataPath(folder, img_prep$site[row], img_prep$point[row]), pattern = glob2rx(paste(img_prep$month[row], "*", img_prep$index_name[row], ".png", sep = "")), recursive = T, full.names = T) %>%
-       image_read(getDataPath(folder, img_prep$site[row], img_prep$point[row], paste(img_prep$FileName[row], "__", img_prep$index_name[row], ".png", sep = ""))) %>%
+       image_read(list.files(getDataPath(folder, img_prep$site[row], img_prep$point[row], paste(img_prep$date[row], "_AAO_-27.3888+152.8808", sep = ""), paste(img_prep$date[row], "T", img_prep$time[row], "_REC_-27.3888+152.8808.flac", sep = "")), pattern = "__ENT.png", full.names = T, recursive = T)) %>%
           image_crop(
             .,
             geometry_area(
@@ -708,8 +705,9 @@ dir.create(getDataPath(folder, step7,unique(img_prep$site), unique(img_prep$poin
     wtData$id <- rownames(ts_data)
     
     wtData <- mutate(wtData, class = NA) %>% 
-      mutate(., component = NA) %>% 
-      select(., id, class, component, everything())
+      mutate(., geo = NA) %>% 
+      mutate(., techno = NA)
+      select(., id, class, geo, techno, everything())
     
     
     samples <- sample(wtData$id, size = ceiling(nrow(wtData)*0.30), replace = F)
@@ -729,16 +727,18 @@ dir.create(getDataPath(folder, step7,unique(img_prep$site), unique(img_prep$poin
   }
 }
 
-#step9 <- "9_SpectroSelected" ----
+#step9: "9_SpectroSelected" ----
 
 for (geo in geo_id) {
-  create_mydir(paste(step9, geo_id, sep = "/"))
-  samples <- read.csv(getDataPath(folder, step8, paste(geo, "_", "202008", "_LabelsSample.csv", sep = ""))) %>% 
+  # create_mydir(paste(step9, geo_id, sep = "/"))
+  samples <- read.csv(getDataPath(folder, step8, paste(geo, "_", month_id, "_LabelsSample.csv", sep = ""))) %>% 
     rename(id = x) %>% 
     as.vector()
+   for (row in 1:nrow(samples)) {
+     
     spec_to_copy <- list.files(getDataPath(
       folder,
-      step7, geo), pattern = samples, full.names = T)
+      step7, site_id, point_id), pattern = samples$id[row], full.names = T, recursive = T)
   file.copy(spec_to_copy, to = getDataPath(folder, step9, geo_id))
     
   }

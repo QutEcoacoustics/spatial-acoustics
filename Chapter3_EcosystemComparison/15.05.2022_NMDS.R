@@ -45,7 +45,7 @@ data_og <- read.csv(getDataPath("13.05.2022_fixingdata5.csv")) %>%
 #General multinomial - between sites ----
 
 dataframe_landscape <- data_og %>%  
-  dplyr::select(., ID.x, RFclass, site, bvg_char, temp_max, moon_illu, natural_cover_3k, np_landscape_3k, tca_landscape_325) %>% 
+  dplyr::select(., ID.x, RFclass, site, bvg_char, temp_max, natural_cover_325, contag_landscape_325, tca_landscape_325) %>% 
   # group_by(ID.x, RFclass) %>% 
   # # mutate(temp_total = round(mean(temp_max)),
   # #        moon = round(mean(moon_illu), 2),  
@@ -54,18 +54,17 @@ dataframe_landscape <- data_og %>%
   #        # water_3k = round(water_3k,2),
   #        np_landscape_3k = round(np_landscape_3k,2)) %>% 
   # ungroup() %>% 
-  group_by(RFclass, site, bvg_char, temp_max, natural_cover_3k, np_landscape_3k, tca_landscape_325) %>%
+  group_by(RFclass, site, bvg_char, temp_max, natural_cover_325, contag_landscape_325, tca_landscape_325) %>%
   mutate(n = n(),
-         natural_cover_3k = round(natural_cover_3k,2),
+         natural_cover_325 = round(natural_cover_325,2),
          tca_landscape_325 = round(tca_landscape_325,2),
          # water_3k = round(water_3k,2),
-         np_landscape_3k = round(np_landscape_3k,2),
-         temp_total = round(mean(temp_max), 2),
-         moon = round(moon_illu,4)) %>% 
+         contag_landscape_325 = round(contag_landscape_325,2),
+         temp_total = round(mean(temp_max), 2)) %>% 
   ungroup() %>% 
   # group_by(ID.x) %>% 
   # ungroup() %>% 
-  dplyr::select(., RFclass, site, ID.x, bvg_char, everything(), -c(temp_max, moon_illu)) %>% 
+  dplyr::select(., RFclass, site, ID.x, bvg_char, everything(), -c(temp_max)) %>% 
   filter(n > 3) %>% 
   distinct() %>% 
   droplevels()
@@ -88,12 +87,12 @@ dataframe_land_wide$insect[is.na(dataframe_land_wide$insect)] <- 0
 
 
 
-dataframe_norm_landscape <- dataframe_land_wide %>% mutate_at(c(4:8), ~decostand(., method = "range") %>% as.vector(.)) %>% 
+dataframe_norm_landscape <- dataframe_land_wide %>% mutate_at(c(4:7), ~decostand(., method = "range") %>% as.vector(.)) %>% 
   droplevels()
 
-nmds <- metaMDS(dataframe_norm_landscape[,c(9:11)], k = 2, trymax = 100, distance = "morisita")
+nmds <- metaMDS(dataframe_norm_landscape[,c(8:10)], k = 2, trymax = 100, distance = "jaccard")
 
-en <- envfit(nmds, dataframe_norm_landscape[,3:7], permutations = 999, na.rm = T,  distance = "morisita")
+en <- envfit(nmds, dataframe_norm_landscape[,3:7], permutations = 999, na.rm = T,  distance = "jaccard")
 en
 
 plot(nmds$species)
