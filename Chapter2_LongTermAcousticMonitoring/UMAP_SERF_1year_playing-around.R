@@ -1,6 +1,8 @@
 library(ggplot2)
 library(tidyverse)
 library(Rcpp)
+library(suncalc)
+library(lubridate)
 
 rm(list=ls())
 
@@ -13,7 +15,9 @@ df <- read.csv(data_wavelets)
 
 
 
-data <- df %>% 
+
+
+data <- df2 %>% 
   separate(X, into = c("site", "point", "batch", "index", "motif_id", "motif_what"), remove = F) %>% 
   mutate(., anthrophony = case_when(RFclass == "anthro" ~ "yes",
     RFclass == "anthrobird" ~ "yes",
@@ -90,26 +94,31 @@ data %>% group_by(RFclass) %>%
 library(umap)
 
 
-data.df <- data[,c(28:111)] 
+data.df <- data[,c(48:131)] 
 data.df[is.na(data.df)] <- 0
 
 
-data.label <- data[,c(4,5,9, 24, 26)] %>% 
+data.label <- data[,c(20, 22, 23, 24, 27, 28, 40, 133, 134, 135)] %>% 
   mutate("ID2" = row_number()) %>% 
-  mutate(season = case_when(batch == "202012" ~ "hot", 
-                            batch == "202001" ~ "hot",
-                            batch == "202002" ~ "hot",
-                            batch == "202003" ~ "cold",
-                            batch == "202004" ~ "cold",
-                            batch == "202005" ~ "cold",
-                            batch == "202006" ~ "cold",
-                            batch == "202007" ~ "cold",
-                            batch == "202008" ~ "cold",
-                            batch == "202009" ~ "hot",
-                            batch == "202010" ~ "hot",
-                            batch == "202011" ~ "hot"))
+  mutate(season = case_when(month == "202012" ~ "hot", 
+                            month == "202001" ~ "hot",
+                            month == "202002" ~ "hot",
+                            month == "202003" ~ "cold",
+                            month == "202004" ~ "cold",
+                            month == "202005" ~ "cold",
+                            month == "202006" ~ "cold",
+                            month == "202007" ~ "cold",
+                            month == "202008" ~ "cold",
+                            month == "202009" ~ "hot",
+                            month == "202010" ~ "hot",
+                            month == "202011" ~ "hot"))
+custom_config <- umap.defaults
+custom_config$n_neighbors <- 5
+custom_config$min_dist <- 0.0001
+custom_config$metric <- "euclidean"
 
-umap_test <- umap(data.df)
+
+umap_test <- umap(data.df, custom_config)
 
 umap_df <- umap_test$layout %>%
   as.data.frame()%>%
@@ -174,9 +183,20 @@ umap_df %>%
   labs(x = "UMAP1",
        y = "UMAP2") +
   theme(strip.text.x = element_text(size = 13), panel.background = element_rect(inherit.blank = "white"), legend.text = element_text(size = 13), legend.title = element_text(size = 14)) +
-  facet_wrap(.~batch, labeller = labeller(batch = month_labels))
+  facet_wrap(.~month, labeller = labeller(batch = month_labels))
 
-ggsave("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter2_SoundscapeTemporalAssessment/Figures/GoodFigs/Fig2.tiff")
+# ggsave("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter2_SoundscapeTemporalAssessment/Figures/GoodFigs/Fig2.tiff")
+
+umap_df %>%
+  ggplot(aes(x = UMAP1, 
+             y = UMAP2, 
+             colour = RFclass)) +
+  # scale_colour_manual(values = c("#fc8d59", "#c51b7d", "#e9a3c9", "#3690c0", "#5ab4ac"), labels = c("Technophony", "Bird", "Bird/insect", "Geophony", "Insect"), name = "Sound class") +
+  geom_point() +
+  labs(x = "UMAP1",
+       y = "UMAP2") +
+  theme(strip.text.x = element_text(size = 13), panel.background = element_rect(inherit.blank = "white"), legend.text = element_text(size = 13), legend.title = element_text(size = 14)) +
+  facet_wrap(.~anthrophony, labeller = labeller(batch = month_labels))
 
 graphical_abs_labels <- labels$month
 names(graphical_abs_labels) <- c("202001", "202002", "202003", "202005", "202006", "202007", "202008", "202009", "202010", "202012",  "202011", "202004")

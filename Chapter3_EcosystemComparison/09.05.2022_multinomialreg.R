@@ -5,6 +5,7 @@ library(reshape2)
 library(caret)
 library(mlogit)
 library(tidyverse)
+library(report)
 
 rm(list = ls())
 
@@ -17,7 +18,7 @@ set.seed(123)
 
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation",  ...))
+  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation",  ...))
 }
 
 data_og <- read.csv(getDataPath("13.05.2022_fixingdata5.csv")) %>% 
@@ -33,8 +34,6 @@ data_og <- read.csv(getDataPath("13.05.2022_fixingdata5.csv")) %>%
   filter(n >= 2) %>% 
   distinct()
 
-hist(data_og)
-
 ggplot(data_og, aes(x = n)) + 
   geom_histogram() +
   facet_wrap(.~RFclass)
@@ -42,8 +41,6 @@ ggsave(getDataPath("Figures", "histogram_indclasses.jpg"))
 
 data_og <- filter(data_og, RFclass == "bird" | RFclass == "frog" | RFclass == "insect") %>% 
   droplevels()
-
-hist(data_og)
 
 ggplot(data_og, aes(n)) + 
   geom_histogram() +
@@ -56,7 +53,7 @@ data <- mlogit.data(data_og, varying = NULL, choice = "RFclass", shape = "wide")
 
 
 
-index <- createDataPartition(data_og$RFclass, p = .70, list = FALSE)
+index <- caret::createDataPartition(data_og$RFclass, p = .70, list = FALSE)
 train <- data_og[index,]
 test <- data_og[-index,]
 

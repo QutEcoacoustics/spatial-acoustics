@@ -25,7 +25,7 @@ library(glmmTMB)
 
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation",  ...))
+  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter3_SoundscapeEcosystemComparation",  ...))
 }
 
 data_og <- read.csv(getDataPath("13.05.2022_fixingdata5.csv")) %>% 

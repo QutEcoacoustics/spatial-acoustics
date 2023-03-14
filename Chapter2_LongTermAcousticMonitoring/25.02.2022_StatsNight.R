@@ -9,7 +9,7 @@ rm(list = ls())
 set.seed(123)
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter2_SoundscapeTemporalAssessment",  ...))
+  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter2_SoundscapeTemporalAssessment",  ...))
 }
 
 df <- read.csv(getDataPath("24.02.2022_completedf.csv"))
@@ -68,6 +68,7 @@ data <- filter(plot_df, period == period_test) %>%
   na.exclude() %>% 
   group_by(month) %>% 
   mutate(n_motif =  n()) %>%
+  mutate(average_motif = as.integer(round(n_motif/n_days, 1))) %>% 
   droplevels()
 
 ### Daily model ----
@@ -125,7 +126,7 @@ labels <- select(data, month, n_motif, n_days) %>%
 
 ### Rose plot - monthly biod
 ggplot(data = data, aes(x = as.factor(month), fill = RFclass)) + 
-  geom_bar(aes(y = (..count..))) +
+  geom_bar(aes(y = average_motif), stat = "identity") +
   scale_fill_manual(values = c("bird" = "#c51b7d", "birdinsect" = "#e9a3c9", "insect" = "#5ab4ac", "froginsect" = "#4d9221", "birdfroginsect" = "#9ebcda")) +
   labs(fill = "Sound class", x = "Month", y = "Sound class count per period/month", caption = paste("Recording hours (6): ",levels(data$Recording_time)[4], ", ", levels(data$Recording_time)[5], ", ", levels(data$Recording_time)[6], ", ", levels(data$Recording_time)[1], ", ", levels(data$Recording_time)[2], ", ", levels(data$Recording_time)[3], sep = "")) +
   scale_x_discrete(labels = labels$labels, expand = c(0,0)) +

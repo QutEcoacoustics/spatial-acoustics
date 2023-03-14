@@ -3,6 +3,8 @@ library(tidyverse)
 library(ggplot2)
 library(rmarkdown)
 library(zoo)
+.libPaths("C:/R/library")
+
 library(forecast)
 library(report)
 library(suncalc)
@@ -10,7 +12,7 @@ library(lubridate)
 library(TTR)
 
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project/Chapter2_SoundscapeTemporalAssessment", ...))
+  return(file.path("C:/Users/scarp/OneDrive/Documents/PhD/Project/chapter2-temporal-assessment", ...))
 }
 
 df <- read.csv(getDataPath("15.02.2022_completedf.csv"))
@@ -27,6 +29,7 @@ df$date_time <- as.Date(df$date_time)
 df <- mutate(df, date_time2 = as.POSIXct(paste(Date, Time), sep = " "))
 
 sun <- getSunlightTimes(date = df$Date, lat = -27.3889, lon = 152.8812, tz = "Australia/Brisbane", keep = c("sunrise", "sunset", "night", "nightEnd"))
+write.csv(sun, getDataPath("sun-times.csv"))
 
  
 df2 <- rename(sun, Date = date) %>% 

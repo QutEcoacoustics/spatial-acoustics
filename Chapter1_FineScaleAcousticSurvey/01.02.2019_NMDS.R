@@ -13,7 +13,7 @@ library(MuMIn)
 
 #Reading and preparing the data ####
 getDataPath <- function (...) {
-  return(file.path("C:/Users/n10393021/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
+  return(file.path("C:/Users/scarp/OneDrive - Queensland University of Technology/Documents/PhD/Project",  ...))
 }
 
 chapter <- "Chapter1_FineScaleAcousticSurvey"
